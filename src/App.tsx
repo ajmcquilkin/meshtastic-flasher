@@ -1,35 +1,134 @@
-import { useEffect, useState } from "react";
-import reactLogo from "./assets/react.svg";
+import { useEffect, useReducer, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import "./App.css";
+import {
+  ListBoardsResponse,
+  ListFirmwareResponse,
+  SerialPortInfo,
+} from "./types";
+import BoardOption, { BoardOptionData } from "./components/BoardOption";
+import { Plus } from "lucide-react";
 
-type FirmwareRelease = {
-  id: string;
-  title: string;
-  page_url: string;
-  zip_url: string;
+type BoardOptionsState = {
+  boards: BoardOptionData[];
 };
 
-type PullRequest = {
-  id: string;
-  title: string;
-  page_url: string;
-  zip_url: string;
+const initialState: BoardOptionsState = {
+  boards: [],
 };
 
-type ListFirmwareResponse = {
-  releases: { stable: FirmwareRelease[]; alpha: FirmwareRelease[] };
-  pullRequests: PullRequest[];
-};
+type Action =
+  | { type: "set_board_hw_model"; payload: { index: number; hwModel: number } }
+  | { type: "set_board_port"; payload: { index: number; port: string } }
+  | { type: "set_board_version"; payload: { index: number; version: string } }
+  | { type: "add_board"; payload: BoardOptionData }
+  | { type: "duplicate_board"; payload: { index: number } }
+  | { type: "delete_board"; payload: { index: number } };
 
-type ListBoardsResponse = Board[];
+const reducer = (
+  state: BoardOptionsState,
+  action: Action
+): BoardOptionsState => {
+  switch (action.type) {
+    case "set_board_hw_model": {
+      const { index, hwModel } = action.payload;
 
-type Board = {
-  hwModel: number;
-  hwModelSlug: string;
-  platformioTarget: string;
-  architecture: string;
-  activelySupported: boolean;
+      // Update only board at index
+      const boards = state.boards.map((board, i) => {
+        if (i === index) {
+          return {
+            ...board,
+            hwModel,
+          };
+        }
+
+        return board;
+      });
+
+      return {
+        ...state,
+        boards,
+      };
+    }
+
+    case "set_board_port": {
+      const { index, port } = action.payload;
+
+      // Update only board at index
+      const boards = state.boards.map((board, i) => {
+        if (i === index) {
+          return {
+            ...board,
+            port,
+          };
+        }
+        return board;
+      });
+
+      return {
+        ...state,
+        boards,
+      };
+    }
+
+    case "set_board_version": {
+      const { index, version } = action.payload;
+
+      // Update only board at index
+      const boards = state.boards.map((board, i) => {
+        if (i === index) {
+          return {
+            ...board,
+            firmwareVersion: version,
+          };
+        }
+        return board;
+      });
+
+      return {
+        ...state,
+        boards,
+      };
+    }
+
+    case "add_board": {
+      const { boards } = state;
+
+      const updated_boards = [...boards, action.payload];
+
+      return {
+        ...state,
+        boards: updated_boards,
+      };
+    }
+
+    case "duplicate_board": {
+      const { index } = action.payload;
+
+      const boards = [...state.boards];
+      const board = boards[index];
+      boards.splice(index, 0, board);
+
+      return {
+        ...state,
+        boards,
+      };
+    }
+
+    case "delete_board": {
+      const { index } = action.payload;
+
+      const boards = [...state.boards];
+      boards.splice(index, 1);
+
+      return {
+        ...state,
+        boards,
+      };
+    }
+
+    default:
+      return state;
+  }
 };
 
 const App = () => {
@@ -37,6 +136,11 @@ const App = () => {
     useState<ListFirmwareResponse | null>(null);
   const [listBoardsResponse, setListBoardsResponse] =
     useState<ListBoardsResponse | null>(null);
+  const [availableSerialPorts, setAvailableSerialPorts] = useState<
+    SerialPortInfo[] | null
+  >(null);
+
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   const getBoards = async () => {
     const boards = (await invoke(
@@ -54,30 +158,130 @@ const App = () => {
     setListFirmwareResponse(releases);
   };
 
+  const getAvailableSerialPorts = async () => {
+    const ports = (await invoke(
+      "get_available_serial_ports"
+    )) as SerialPortInfo[];
+    console.info(ports);
+    setAvailableSerialPorts(ports);
+  };
+
   useEffect(() => {
     getBoards();
     getFirmwareReleases();
+    getAvailableSerialPorts();
   }, []);
 
+  const handleFlashDevices = async () => {
+    Promise.all(
+      state.boards.map((board) =>
+        invoke("flash_device", {
+          hwModel: board.hwModel,
+          uploadPort: { type: "localDisk", port: board.port },
+          firmwareVersion: board.firmwareVersion,
+        })
+      )
+    )
+      .then(() => console.info("Flashing completed"))
+      .catch(console.error);
+  };
+
   return (
-    <div className="container">
-      <h1>Welcome to Tauri!</h1>
+    <div className="w-full min-h-screen bg-white">
+      <h1 className="text-4xl font-semibold text-gray-700 text-center pt-8 pb-4">
+        Meshtastic Flasher
+      </h1>
 
-      <div className="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
+      <button
+        className="flex flex-row justify-center gap-2 px-4 w-full"
+        onClick={handleFlashDevices}
+      >
+        <Plus className="text-gray-400" strokeWidth={1.5} />
+        <p className="text-gray-700">Flash Devices</p>
+      </button>
 
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
+      {listBoardsResponse && listFirmwareReponse && availableSerialPorts && (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 p-4">
+            {state.boards.map((boardOption, index) => (
+              <BoardOption
+                key={index}
+                board={boardOption}
+                activelySupported={
+                  listBoardsResponse.find(
+                    (b) => b.hwModel === boardOption.hwModel
+                  )?.activelySupported ?? false
+                }
+                availableBoards={listBoardsResponse}
+                availableFirmwareVersions={listFirmwareReponse.releases}
+                availableSerialPorts={availableSerialPorts}
+                setFirmwareVersion={(version) => {
+                  dispatch({
+                    type: "set_board_version",
+                    payload: {
+                      index,
+                      version,
+                    },
+                  });
+                }}
+                deleteSelf={() => {
+                  dispatch({
+                    type: "delete_board",
+                    payload: {
+                      index,
+                    },
+                  });
+                }}
+                duplicateSelf={() => {
+                  dispatch({
+                    type: "duplicate_board",
+                    payload: {
+                      index,
+                    },
+                  });
+                }}
+                setHwModel={(hwModel) => {
+                  dispatch({
+                    type: "set_board_hw_model",
+                    payload: {
+                      index,
+                      hwModel,
+                    },
+                  });
+                }}
+                setPort={(port) => {
+                  dispatch({
+                    type: "set_board_port",
+                    payload: {
+                      index,
+                      port,
+                    },
+                  });
+                }}
+              />
+            ))}
+          </div>
 
-      <div>
+          <button
+            className="flex flex-row justify-center gap-2 px-4 w-full"
+            onClick={() =>
+              dispatch({
+                type: "add_board",
+                payload: {
+                  firmwareVersion: listFirmwareReponse.releases.stable[0].id,
+                  hwModel: listBoardsResponse[0].hwModel,
+                  port: "",
+                },
+              })
+            }
+          >
+            <Plus className="text-gray-400" strokeWidth={1.5} />
+            <p className="text-gray-700">Add Board</p>
+          </button>
+        </div>
+      )}
+
+      {/* <div>
         <h2>Firmware Releases</h2>
         <ul className="list-none">
           {listFirmwareReponse &&
@@ -85,9 +289,9 @@ const App = () => {
               <li key={release.id}>{release.title}</li>
             ))}
         </ul>
-      </div>
+      </div> */}
 
-      <div>
+      {/* <div>
         <h2>Supported Boards</h2>
         <ul className="list-none">
           {listBoardsResponse &&
@@ -95,7 +299,7 @@ const App = () => {
               <li key={board.hwModelSlug}>{board.hwModelSlug}</li>
             ))}
         </ul>
-      </div>
+      </div> */}
     </div>
   );
 };
