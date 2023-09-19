@@ -2335,6 +2335,7 @@ name = "meshtastic-flasher"
 version = "0.0.0"
 dependencies = [
  "espflash",
+ "regex",
  "reqwest",
  "serde",
  "serde_json",

@@ -4,7 +4,15 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
 } from "@radix-ui/react-icons";
-import { ShieldAlert, ShieldCheck, Copy, Trash2 } from "lucide-react";
+import {
+  ShieldAlert,
+  ShieldCheck,
+  Copy,
+  Trash2,
+  Check,
+  X,
+  Loader,
+} from "lucide-react";
 import { open } from "@tauri-apps/api/dialog";
 
 import {
@@ -25,6 +33,7 @@ export interface BoardOptionData {
 export interface BoardOptionProps {
   board: BoardOptionData;
   activelySupported: boolean;
+  requestState: "pending" | "success" | "error" | null;
 
   availableBoards: ListBoardsResponse;
   availableFirmwareVersions: ListFirmwareResponse["releases"];
@@ -41,6 +50,7 @@ export interface BoardOptionProps {
 const BoardOption = ({
   board,
   activelySupported,
+  requestState,
 
   availableBoards,
   availableFirmwareVersions,
@@ -268,6 +278,7 @@ const BoardOption = ({
 
                   {availableFirmwareVersions.stable.map((version) => (
                     <Select.Item
+                      key={version.id}
                       className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer"
                       value={version.id}
                     >
@@ -288,6 +299,7 @@ const BoardOption = ({
 
                   {availableFirmwareVersions.alpha.map((version) => (
                     <Select.Item
+                      key={version.id}
                       className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer"
                       value={version.id}
                     >
@@ -309,6 +321,25 @@ const BoardOption = ({
       </div>
 
       <div className="flex flex-row justify-end gap-4">
+        <div>
+          {requestState === "pending" ? (
+            <DefaultTooltip text="Flashing device...">
+              <Loader
+                className="animate-spin text-gray-400"
+                strokeWidth={1.5}
+              />
+            </DefaultTooltip>
+          ) : requestState === "success" ? (
+            <DefaultTooltip text="Device flashed successfully">
+              <Check className="text-green-500" strokeWidth={1.5} />
+            </DefaultTooltip>
+          ) : requestState === "error" ? (
+            <DefaultTooltip text="Failed to flash device">
+              <X className="text-red-500" strokeWidth={1.5} />
+            </DefaultTooltip>
+          ) : null}
+        </div>
+
         <button type="button" onClick={duplicateSelf}>
           <DefaultTooltip text="Duplicate Board Option">
             <Copy className="text-gray-400" strokeWidth={1.5} />

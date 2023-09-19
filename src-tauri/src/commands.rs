@@ -1,8 +1,17 @@
 use reqwest;
 use serialport::SerialPortInfo;
-use std::io::{Cursor, Read};
-use tauri::{api::path::app_data_dir, Config};
-use tokio::{fs::File, io::BufReader};
+use std::{
+    io::{Cursor, Read},
+    path::{Path, PathBuf},
+};
+use tauri::{
+    api::path::{app_data_dir, resolve_path, BaseDirectory},
+    Env,
+};
+use tokio::{
+    fs::File,
+    io::{AsyncReadExt, AsyncWriteExt},
+};
 use zip::read::ZipArchive;
 
 use crate::state;
@@ -108,10 +117,12 @@ pub async fn get_available_serial_ports() -> Result<Vec<SerialPortInfo>, String>
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-#[serde(tag = "type", content = "port", rename_all = "camelCase")]
-pub enum UploadPort {
-    SerialPort(String), // e.g. "COM1"
-    LocalDisk(String),  // e.g. "D:\"
+#[serde(rename_all = "camelCase")]
+pub struct FirmwareVersion {
+    major: u32,
+    minor: u32,
+    patch: u32,
+    hash: String,
 }
 
 #[tauri::command]
@@ -120,14 +131,14 @@ pub async fn flash_device(
     firmware_releases_state: tauri::State<'_, state::FirmwareReleasesState>,
     boards_state: tauri::State<'_, state::BoardsState>,
     hw_model: u32,
-    firmware_version: String,
-    upload_port: UploadPort,
+    firmware_version_id: String,
+    upload_port: String,
 ) -> Result<(), String> {
     let firmware_releases_guard = firmware_releases_state.inner.lock().await;
     let boards_guard = boards_state.inner.lock().await;
 
     println!("hw_model: {}", hw_model);
-    println!("firmware_version: {}", firmware_version);
+    println!("firmware_version_id: {}", firmware_version_id);
     println!("upload_port: {:?}", upload_port);
 
     let board = boards_guard
@@ -140,18 +151,23 @@ pub async fn flash_device(
         .releases
         .stable
         .iter()
-        .find(|r| r.id == firmware_version);
+        .find(|r| r.id == firmware_version_id);
 
     let alpha_firmware_release = firmware_releases_guard
         .releases
         .alpha
         .iter()
-        .find(|r| r.id == firmware_version);
+        .find(|r| r.id == firmware_version_id);
 
     let firmware_release = match (stable_firmware_release, alpha_firmware_release) {
         (Some(stable), _) => stable,
         (_, Some(alpha)) => alpha,
-        (None, None) => return Err(format!("Firmware release {} not found", firmware_version)),
+        (None, None) => {
+            return Err(format!(
+                "Firmware release {} not found",
+                firmware_version_id
+            ))
+        }
     };
 
     println!("Board: {:?}", board);
@@ -159,179 +175,221 @@ pub async fn flash_device(
 
     let firmware_url = firmware_release.zip_url.clone();
 
+    // Parse firmware string to get relevant info
+
+    let re = regex::Regex::new("(?:v?)(\\d+)\\.(\\d+)\\.(\\d+)(?:\\.([a-f0-9]+|[a-z\\-]+))?")
+        .map_err(|e| e.to_string())?;
+
+    let captures = re.captures(&firmware_version_id).ok_or("No captures")?;
+
+    let firmware_version = FirmwareVersion {
+        major: captures
+            .get(1)
+            .ok_or("No major")?
+            .as_str()
+            .parse::<u32>()
+            .map_err(|e| e.to_string())?,
+
+        minor: captures
+            .get(2)
+            .ok_or("No minor")?
+            .as_str()
+            .parse::<u32>()
+            .map_err(|e| e.to_string())?,
+
+        patch: captures
+            .get(3)
+            .ok_or("No patch")?
+            .as_str()
+            .parse::<u32>()
+            .map_err(|e| e.to_string())?,
+
+        hash: captures.get(4).ok_or("No hash")?.as_str().to_string(),
+    };
+
+    println!("Firmware version: {:?}", firmware_version);
+
+    println!("Downloading firmware from {}", firmware_url.clone());
+
     // Download file from the URL
     let response = reqwest::get(firmware_url.clone())
         .await
         .map_err(|e| e.to_string())?;
 
+    println!("Created GET request");
+
     let bytes = response.bytes().await.map_err(|e| e.to_string())?;
 
-    // Create a cursor to read the downloaded data and pass it to the ZipArchive
-    let reader = Cursor::new(bytes.clone());
-    let mut archive = ZipArchive::new(reader).map_err(|e| e.to_string())?;
+    println!("Successfully downloaded {} bytes", bytes.len());
 
-    // Loop through each file in the ZIP
-
-    let mut firmware_file = None;
-    let mut firmware_file_name = None;
-
-    for i in 0..archive.len() {
-        let mut file = &archive.by_index(i).map_err(|e| e.to_string())?;
-        let outpath = file.name().to_owned();
-
-        println!("Filename: {}", outpath);
-
-        if outpath.contains(board.hw_model_slug.as_str()) {
-            firmware_file = Some(file);
-            firmware_file_name = Some(outpath);
-            break;
-        }
-    }
-
-    // get selected files and write them to disk
-
-    let mut firmware_file = firmware_file.ok_or("No firmware file found".to_string())?;
-    let mut firmware_file_name =
-        firmware_file_name.ok_or("No firmware file name found".to_string())?;
-
-    println!("Firmware file: {}", firmware_file_name);
+    // Write firmware file to disk
 
     let app_data_dir = app_data_dir(&app_handle.config()).ok_or("No app data dir".to_string())?;
+
+    println!("App data dir: {}", app_data_dir.display());
+
+    if !Path::new(app_data_dir.join(Path::new("firmware")).as_path()).exists() {
+        println!("Creating firmware directory");
+
+        tokio::fs::create_dir(app_data_dir.join(Path::new("firmware")))
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+
     let firmware_directory = app_data_dir.join("firmware");
 
-    // TODO unzip the archive file
-    // std::fs::create_dir(firmware_directory.clone()).map_err(|e| e.to_string())?;
+    println!("Firmware directory: {}", firmware_directory.display());
 
-    // let mut outfile = std::fs::File::create(firmware_directory.join(firmware_file_name.clone()))
-    //     .map_err(|e| e.to_string())?;
+    let reader = Cursor::new(bytes);
+    let mut archive = ZipArchive::new(reader).map_err(|e| e.to_string())?;
 
-    // // unzip the files before copying
+    let firmware_file_name = if board.architecture.contains("esp") {
+        get_esp_firmware_name(board.hw_model_slug.clone(), firmware_version)
+    } else {
+        // This will fail with a pico board
+        get_nrf_firmware_name(board.hw_model_slug.clone(), firmware_version)
+    };
+    println!("Firmware file name: {}", firmware_file_name);
 
-    // let file = File::open(firmware_file).await.map_err(|e| e.to_string())?;
-    // let mut archive = ZipArchive::new(BufReader::new(file)).map_err(|e| e.to_string())?;
+    let temp_firmware_file = firmware_directory.join(firmware_file_name.clone());
+    println!("Temp firmware file: {}", temp_firmware_file.display());
 
-    // let mut zip_file = archive.by_name(file_name).map_err(|e| e.to_string())?;
+    // Need to keep `file` within scope since `ZipFile` isn't `Send`
+    // This means it can't be awaited across
+    let contents: Vec<u8> = {
+        let mut file = match archive.by_name(firmware_file_name.as_str()) {
+            Ok(file) => file,
+            Err(e) => {
+                return Err(format!(
+                    "File {} not found in archive: {}",
+                    firmware_file_name, e
+                ))
+            }
+        };
 
-    // let mut output_file = File::create(output_path).map_err(|e| e.to_string())?;
+        // Read the file's contents and write them to the output
 
-    // std::io::copy(&mut zip_file, &mut output_file).map_err(|e| e.to_string())?;
+        let mut contents = Vec::new();
+        file.read_to_end(&mut contents).map_err(|e| e.to_string())?;
 
-    // std::io::copy(firmware_file, outfile).map_err(|e| e.to_string())?;
+        contents
+    };
+
+    // Write firmware file to temp directory
+
+    let temp_file_path = resolve_path(
+        &app_handle.config(),
+        app_handle.package_info(),
+        &Env::default(),
+        firmware_file_name.as_str(),
+        Some(BaseDirectory::Temp),
+    )
+    .map_err(|e| e.to_string())?;
+
+    // let mut output = File::create(temp_firmware_file.clone())
+    let mut output = File::create(temp_file_path.clone())
+        .await
+        .map_err(|e| e.to_string())?;
+
+    output
+        .write_all(&contents)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    println!("Wrote firmware file to {}", temp_firmware_file.display());
+
+    // Flash board
 
     if board.architecture.contains("esp") {
-        flash_esp32().await?;
+        flash_esp32(firmware_file_name, temp_file_path.clone(), upload_port).await?;
+    // temp_firmware_path
     } else {
-        flash_nrf().await?;
+        flash_nrf(firmware_file_name, temp_file_path, upload_port).await?; // temp_firmware_path
     }
 
     Ok(())
 }
 
-async fn flash_esp32() -> Result<(), String> {
+fn get_esp_firmware_name(slug: String, firmware_version: FirmwareVersion) -> String {
+    format!(
+        "firmware-{}-{}.{}.{}.{}.bin",
+        slug.to_lowercase(),
+        firmware_version.major,
+        firmware_version.minor,
+        firmware_version.patch,
+        firmware_version.hash
+    )
+}
+
+fn get_nrf_firmware_name(slug: String, firmware_version: FirmwareVersion) -> String {
+    format!(
+        "firmware-{}-{}.{}.{}.{}.uf2",
+        slug.to_lowercase(),
+        firmware_version.major,
+        firmware_version.minor,
+        firmware_version.patch,
+        firmware_version.hash
+    )
+}
+
+async fn flash_esp32(
+    firmware_file_name: String,
+    firmware_file_path: PathBuf,
+    upload_port: String,
+) -> Result<(), String> {
     println!(
-        "ESP32 board detected, will use esptool-rs: {}",
-        board.architecture
+        "ESP32 board detected, will use file: {} -> {}/{}",
+        firmware_file_name, upload_port, firmware_file_name
     );
 
     Ok(())
 }
 
-async fn flash_nrf() -> Result<(), String> {
+async fn flash_nrf(
+    firmware_file_name: String,
+    firmware_file_path: PathBuf,
+    upload_dir: String,
+) -> Result<(), String> {
     println!(
-        "Non-ESP32 board detected, will use file: {}",
-        board.architecture
+        "Non-ESP32 board detected, will use file: {} -> {}",
+        firmware_file_name, upload_dir
     );
+
+    // Open temporary firmware file
+
+    let firmware_file = File::open(firmware_file_path.clone())
+        .await
+        .map_err(|e| e.to_string())?;
+
+    println!("Opened firmware file at {}", firmware_file_path.display());
+
+    // Create output file
+
+    let output_file_path = Path::new(&upload_dir).join(firmware_file_name);
+
+    println!("Output file path: {}", output_file_path.display());
+
+    let output_file = File::create(output_file_path.clone())
+        .await
+        .map_err(|e| e.to_string())?;
+
+    println!("Opened output file at {}", output_file_path.display());
+
+    // Write contents of firmware file to output file
+
+    let mut firmware_file_reader = tokio::io::BufReader::new(firmware_file);
+
+    println!("Created firmware file reader");
+
+    let mut output_file_writer = tokio::io::BufWriter::new(output_file);
+
+    println!("Created output file writer");
+
+    tokio::io::copy(&mut firmware_file_reader, &mut output_file_writer)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    println!("Wrote firmware file to {}", output_file_path.display());
 
     Ok(())
 }
-
-// #[tauri::command]
-// pub async fn download_release_assets(
-//     app_handle: tauri::AppHandle,
-//     firmware_releases_state: tauri::State<'_, state::FirmwareReleasesState>,
-//     tag: String,
-// ) -> Result<Vec<String>, String> {
-//     // Don't want to block mutex for too long, and don't need
-//     // to update the release metadata, so just clone it
-//     let found_release = {
-//         let firmware_releases_guard = firmware_releases_state.inner.lock().await;
-
-//         firmware_releases_guard
-//             .get(&tag)
-//             .ok_or("Release not found".to_string())?
-//             .clone()
-//     };
-
-//     println!(
-//         "Found release: {:?}",
-//         found_release
-//             .assets
-//             .clone()
-//             .iter()
-//             .map(|a| a.name.clone())
-//             .collect::<Vec<_>>()
-//     );
-
-//     let firmware_asset = found_release
-//         .assets
-//         .iter()
-//         .find(|asset| {
-//             asset.name.ends_with(".zip") && asset.name.contains("firmware")
-//             // && asset.name.contains(format!("firmware-{}", tag).as_str())
-//         })
-//         .ok_or(format!("No \"firmware\" asset found for release {}", tag))?;
-
-//     println!(
-//         "Downloading firmware from {}",
-//         firmware_asset.browser_download_url
-//     );
-
-//     // Download the ZIP file
-//     let response = reqwest::get(firmware_asset.browser_download_url.clone())
-//         .await
-//         .map_err(|e| e.to_string())?;
-//     let bytes = response.bytes().await.map_err(|e| e.to_string())?;
-
-//     println!("Downloaded {} bytes", bytes.len());
-
-//     // Create a cursor to read the downloaded data and pass it to the ZipArchive
-//     let reader = Cursor::new(bytes);
-//     let mut archive = ZipArchive::new(reader).map_err(|e| e.to_string())?;
-
-//     println!("Archive has {} files", archive.len());
-
-//     let app_data_dir = app_data_dir(&app_handle.config()).ok_or("No app data dir".to_string())?;
-//     println!("App data dir: {}", app_data_dir.display());
-//     let firmware_directory = app_data_dir.join("firmware");
-//     std::fs::create_dir(firmware_directory.clone()).map_err(|e| e.to_string())?;
-
-//     // Loop through each file in the ZIP
-//     for i in 0..archive.len() {
-//         let mut file = archive.by_index(i).map_err(|e| e.to_string())?;
-//         let outpath = firmware_directory.clone().join(file.name());
-
-//         println!("Filename: {}", outpath.display());
-
-//         // if file.name().ends_with('/') {
-//         //     std::fs::create_dir_all(&outpath).map_err(|e| e.to_string())?;
-//         // } else {
-//         //     if let Some(p) = outpath.parent() {
-//         //         if !p.exists() {
-//         //             std::fs::create_dir_all(p).map_err(|e| e.to_string())?;
-//         //         }
-//         //     }
-//         //     let mut outfile = std::fs::File::create(&outpath).map_err(|e| e.to_string())?;
-//         //     std::io::copy(&mut file, &mut outfile).map_err(|e| e.to_string())?;
-//         // }
-//     }
-
-//     let mut boards = vec![];
-
-//     for asset in &found_release.assets {
-//         if asset.name.ends_with(".bin") {
-//             boards.push(asset.name.clone());
-//         }
-//     }
-
-//     Ok(boards)
-// }

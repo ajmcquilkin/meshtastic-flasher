@@ -6,7 +6,7 @@ import {
   SerialPortInfo,
 } from "./types";
 import BoardOption, { BoardOptionData } from "./components/BoardOption";
-import { Plus } from "lucide-react";
+import { Cpu, Plus } from "lucide-react";
 
 type BoardOptionsState = {
   boards: BoardOptionData[];
@@ -140,6 +140,10 @@ const App = () => {
     SerialPortInfo[] | null
   >(null);
 
+  const [flashStates, setFlashStates] = useState<{
+    [port: string]: "pending" | "success" | "error" | null;
+  }>({});
+
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const getBoards = async () => {
@@ -172,18 +176,27 @@ const App = () => {
     getAvailableSerialPorts();
   }, []);
 
+  const flashDevice = async (board: BoardOptionData) => {
+    try {
+      setFlashStates((prev) => ({ ...prev, [board.port]: "pending" }));
+
+      await invoke("flash_device", {
+        hwModel: board.hwModel,
+        uploadPort: board.port,
+        firmwareVersionId: board.firmwareVersion,
+      });
+
+      setFlashStates((prev) => ({ ...prev, [board.port]: "success" }));
+    } catch (error) {
+      console.error(error);
+      setFlashStates((prev) => ({ ...prev, [board.port]: "error" }));
+    }
+  };
+
   const handleFlashDevices = async () => {
-    Promise.all(
-      state.boards.map((board) =>
-        invoke("flash_device", {
-          hwModel: board.hwModel,
-          uploadPort: { type: "localDisk", port: board.port },
-          firmwareVersion: board.firmwareVersion,
-        })
-      )
-    )
+    Promise.all(state.boards.map((b) => flashDevice(b)))
       .then(() => console.info("Flashing completed"))
-      .catch(console.error);
+      .catch((e) => console.error("Flashing failed", e));
   };
 
   return (
@@ -196,7 +209,7 @@ const App = () => {
         className="flex flex-row justify-center gap-2 px-4 w-full"
         onClick={handleFlashDevices}
       >
-        <Plus className="text-gray-400" strokeWidth={1.5} />
+        <Cpu className="text-gray-400" strokeWidth={1.5} />
         <p className="text-gray-700">Flash Devices</p>
       </button>
 
@@ -212,6 +225,7 @@ const App = () => {
                     (b) => b.hwModel === boardOption.hwModel
                   )?.activelySupported ?? false
                 }
+                requestState={flashStates[boardOption.port] ?? null}
                 availableBoards={listBoardsResponse}
                 availableFirmwareVersions={listFirmwareReponse.releases}
                 availableSerialPorts={availableSerialPorts}
