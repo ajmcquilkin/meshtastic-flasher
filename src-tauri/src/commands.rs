@@ -4,14 +4,8 @@ use std::{
     io::{Cursor, Read},
     path::{Path, PathBuf},
 };
-use tauri::{
-    api::path::{app_data_dir, resolve_path, BaseDirectory},
-    Env,
-};
-use tokio::{
-    fs::File,
-    io::{AsyncReadExt, AsyncWriteExt},
-};
+use tauri::Manager;
+use tokio::{fs::File, io::AsyncWriteExt};
 use zip::read::ZipArchive;
 
 use crate::state;
@@ -224,7 +218,8 @@ pub async fn flash_device(
 
     // Write firmware file to disk
 
-    let app_data_dir = app_data_dir(&app_handle.config()).ok_or("No app data dir".to_string())?;
+    let path_resolver = app_handle.path();
+    let app_data_dir = path_resolver.app_data_dir().map_err(|e| e.to_string())?;
 
     println!("App data dir: {}", app_data_dir.display());
 
@@ -277,14 +272,14 @@ pub async fn flash_device(
 
     // Write firmware file to temp directory
 
-    let temp_file_path = resolve_path(
-        &app_handle.config(),
-        app_handle.package_info(),
-        &Env::default(),
-        firmware_file_name.as_str(),
-        Some(BaseDirectory::Temp),
-    )
-    .map_err(|e| e.to_string())?;
+    let temp_file_path = path_resolver
+        .temp_dir()
+        .map_err(|e| e.to_string())?
+        .join(firmware_file_name.clone());
+
+    //  asset_resolver
+    //     .get(firmware_file_name.clone())
+    //     .ok_or(format!("Asset {} not found", firmware_file_name))?;
 
     // let mut output = File::create(temp_firmware_file.clone())
     let mut output = File::create(temp_file_path.clone())

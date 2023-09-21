@@ -15,6 +15,7 @@ fn main() {
         ])
         .manage(state::BoardsState::default())
         .manage(state::FirmwareReleasesState::default())
+        .plugin(tauri_plugin_dialog::init())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
