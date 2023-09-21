@@ -1,12 +1,15 @@
 import { useEffect, useReducer, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
+import { Cpu, Plus } from "lucide-react";
+
 import {
   ListBoardsResponse,
   ListFirmwareResponse,
   SerialPortInfo,
 } from "./types";
 import BoardOption, { BoardOptionData } from "./components/BoardOption";
-import { Cpu, Plus } from "lucide-react";
+import Titlebar from "./components/Titlebar";
+import DefaultTooltip from "./components/generic/DefaultTooltip";
 
 type BoardOptionsState = {
   boards: BoardOptionData[];
@@ -200,21 +203,22 @@ const App = () => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-white">
-      <h1 className="text-4xl font-semibold text-gray-700 text-center pt-8 pb-4">
-        Meshtastic Flasher
-      </h1>
+    <div className="relative w-full min-h-screen bg-white">
+      <Titlebar />
 
-      <button
-        className="flex flex-row justify-center gap-2 px-4 w-full"
-        onClick={handleFlashDevices}
-      >
-        <Cpu className="text-gray-400" strokeWidth={1.5} />
-        <p className="text-gray-700">Flash Devices</p>
-      </button>
+      <div className="absolute bottom-9 right-9">
+        <DefaultTooltip text="Flash listed devices">
+          <button
+            className="w-12 h-12 border border-gray-100 bg-gray-700 rounded-full shadow-lg"
+            onClick={handleFlashDevices}
+          >
+            <Cpu className="m-auto text-gray-100" strokeWidth={1.5} />
+          </button>
+        </DefaultTooltip>
+      </div>
 
       {listBoardsResponse && listFirmwareReponse && availableSerialPorts && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 mx-auto max-w-[900px]">
           <div className="flex flex-col gap-4 p-4">
             {state.boards.map((boardOption, index) => (
               <BoardOption
