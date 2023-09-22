@@ -1,3 +1,5 @@
+use espflash::flasher::ProgressCallbacks;
+use espflash::{flasher::Flasher, interface::Interface};
 use reqwest;
 use serialport::SerialPortInfo;
 use std::{
@@ -277,11 +279,6 @@ pub async fn flash_device(
         .map_err(|e| e.to_string())?
         .join(firmware_file_name.clone());
 
-    //  asset_resolver
-    //     .get(firmware_file_name.clone())
-    //     .ok_or(format!("Asset {} not found", firmware_file_name))?;
-
-    // let mut output = File::create(temp_firmware_file.clone())
     let mut output = File::create(temp_file_path.clone())
         .await
         .map_err(|e| e.to_string())?;
@@ -327,6 +324,106 @@ fn get_nrf_firmware_name(slug: String, firmware_version: FirmwareVersion) -> Str
     )
 }
 
+/// Adapted from @thebentern https://github.com/meshtastic/install/tree/main
+#[derive(Clone, Debug)]
+struct FlashProgress {
+    current: usize,
+    total: usize,
+}
+
+/// Adapted from @thebentern https://github.com/meshtastic/install/tree/main
+impl ProgressCallbacks for FlashProgress {
+    fn init(&mut self, addr: u32, total: usize) {
+        println!("init: addr: {}, total: {}", addr, total);
+        self.current = 0;
+        self.total = total;
+    }
+
+    fn update(&mut self, current: usize) {
+        println!("update: current: {}", current);
+        self.current = current;
+    }
+
+    fn finish(&mut self) {
+        println!("finish");
+    }
+}
+
+/// Adapted from @thebentern https://github.com/meshtastic/install/tree/main
+pub fn get_port_by_name(port: &String) -> Result<serialport::SerialPortInfo, String> {
+    let port_info = serialport::available_ports()
+        .map_err(|e| e.to_string())?
+        .into_iter()
+        .find(|p| {
+            match &p.port_type {
+                serialport::SerialPortType::UsbPort(_info) if p.port_name == port.as_str() => {
+                    return true;
+                }
+                _ => (),
+            }
+            false
+        })
+        .ok_or(format!("Port {} not found", port))?;
+
+    Ok(port_info)
+}
+
+/// Adapted from @thebentern https://github.com/meshtastic/install/tree/main
+pub async fn flash_esp_binary(
+    port: String,
+    binary_file_path: PathBuf,
+    flash_offset: u32,
+) -> Result<(), String> {
+    let mut data = tokio::fs::read(&binary_file_path)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let dtr = Some(1);
+    let rts = Some(0);
+
+    // let port_info = get_serial_port_info(port.as_str()).unwrap();
+    let serial_port_info = get_port_by_name(&port)?;
+    let port_info = match &serial_port_info.port_type {
+        serialport::SerialPortType::UsbPort(info) => Some(info.clone()),
+        _ => return Err("Specified port is not a valid USB / Serial port".to_string()),
+    };
+    let serial = Interface::new(&serial_port_info, dtr, rts).unwrap();
+
+    println!("Connecting to port {}...", port);
+    let mut flasher = Flasher::connect(serial, port_info.unwrap(), Some(921600), true)
+        .map_err(|e| e.to_string())?;
+
+    println!("Starting flashing process...");
+
+    let chunk_size = 1024 * 1024; // 1MB chunk size
+    let mut offset = flash_offset;
+
+    let mut progress = FlashProgress {
+        total: 0,
+        current: 0,
+    };
+
+    while !data.is_empty() {
+        let (chunk, rest) = if data.len() > chunk_size {
+            data.split_at(chunk_size)
+        } else {
+            (data.as_ref(), &[][..])
+        };
+
+        flasher
+            .write_bin_to_flash(offset, chunk, Some(&mut progress))
+            .map_err(|e| {
+                let error = format!("Flash error: {:?}", e);
+                println!("{}", error);
+                error
+            })?;
+
+        offset += chunk.len() as u32;
+        data = rest.to_vec();
+    }
+    Ok(())
+}
+
 async fn flash_esp32(
     firmware_file_name: String,
     firmware_file_path: PathBuf,
@@ -336,6 +433,8 @@ async fn flash_esp32(
         "ESP32 board detected, will use file: {} -> {}/{}",
         firmware_file_name, upload_port, firmware_file_name
     );
+
+    flash_esp_binary(upload_port, firmware_file_path, 0x010000).await?;
 
     Ok(())
 }
