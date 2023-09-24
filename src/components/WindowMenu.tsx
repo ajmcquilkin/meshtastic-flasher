@@ -16,7 +16,6 @@ const WindowMenu = ({ showWelcomeScreen }: WindowMenuProps) => {
 
   const handleToggleFullscreen = async () => {
     const isFullscreen = await currentWindow.isFullscreen();
-    console.log("isFullscreen", isFullscreen);
     await currentWindow.setFullscreen(!isFullscreen);
   };
 

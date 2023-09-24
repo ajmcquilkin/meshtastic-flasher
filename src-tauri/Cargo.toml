@@ -1,6 +1,6 @@
 [package]
 name = "meshtastic-flasher"
-version = "0.1.0"
+version = "0.2.0"
 description = "A Tauri App"
 authors = ["you"]
 license = ""
@@ -23,10 +23,12 @@ zip = "0.6.6"
 serialport = { version = "4.2.2", features = ["serde"] }
 regex = "1.9.5"
 tauri-plugin-dialog = "2.0.0-alpha.2"
+tauri-plugin-log = "2.0.0-alpha"
 tauri-plugin-os = "2.0.0-alpha.2"
 tauri-plugin-shell = "2.0.0-alpha.2"
 tauri-plugin-store = "2.0.0-alpha.2"
 tauri-plugin-window = "2.0.0-alpha.2"
+log = "0.4.20"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

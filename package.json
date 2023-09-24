@@ -1,6 +1,6 @@
 {
   "name": "meshtastic-flasher",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Meshtastic GUI Flasher",
   "license": "GPL-3.0-only",
   "type": "module",
@@ -27,6 +27,7 @@
     "@radix-ui/react-visually-hidden": "^1.0.3",
     "@tauri-apps/api": "2.0.0-alpha.8",
     "@tauri-apps/plugin-dialog": "2.0.0-alpha.1",
+    "@tauri-apps/plugin-log": "2.0.0-alpha.1",
     "@tauri-apps/plugin-os": "2.0.0-alpha.2",
     "@tauri-apps/plugin-shell": "2.0.0-alpha.1",
     "@tauri-apps/plugin-store": "github:tauri-apps/tauri-plugin-store#v2",

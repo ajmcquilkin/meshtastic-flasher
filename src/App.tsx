@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { Store } from "@tauri-apps/plugin-store";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowUpFromLine, Plus } from "lucide-react";
+import { info, error } from "@tauri-apps/plugin-log";
 
 import {
   ListBoardsResponse,
@@ -36,7 +37,7 @@ const App = () => {
     [port: string]: "pending" | "success" | "error" | null;
   }>({});
 
-  const [showWelcomeScreen, setShowWelcomeScreen] = useState(false);
+  const [showWelcomeScreen, setShowWelcomeScreen] = useState(true);
 
   const [state, dispatch] = useAppReducer();
 
@@ -58,7 +59,7 @@ const App = () => {
     const boards = (await invoke(
       "fetch_supported_boards"
     )) as ListBoardsResponse;
-    console.info(boards);
+    info(`Received ${boards.length} boards from backend`);
     setListBoardsResponse(boards);
   };
 
@@ -66,7 +67,9 @@ const App = () => {
     const releases = (await invoke(
       "fetch_firmware_releases"
     )) as ListFirmwareResponse;
-    console.info(releases);
+    info(
+      `Received ${releases.releases.alpha.length} alpha and ${releases.releases.stable.length} stable firmware releases from backend`
+    );
     setListFirmwareResponse(releases);
   };
 
@@ -74,7 +77,7 @@ const App = () => {
     const ports = (await invoke(
       "get_available_serial_ports"
     )) as SerialPortInfo[];
-    console.info(ports);
+    info(`Received ${ports.length} serial ports from backend`);
     setAvailableSerialPorts(ports);
   };
 
@@ -95,16 +98,18 @@ const App = () => {
       });
 
       setFlashStates((prev) => ({ ...prev, [board.port]: "success" }));
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      error(err as string);
       setFlashStates((prev) => ({ ...prev, [board.port]: "error" }));
     }
   };
 
   const handleFlashDevices = async () => {
+    info('Clicked "Flash devices"');
+
     Promise.all(state.boards.map((b) => flashDevice(b)))
-      .then(() => console.info("Flashing completed"))
-      .catch((e) => console.error("Flashing failed", e));
+      .then(() => info("Flashing completed"))
+      .catch((e) => error("Flashing failed", e));
   };
 
   return (

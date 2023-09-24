@@ -26,6 +26,7 @@ import {
 import DefaultTooltip from "./generic/DefaultTooltip";
 import { useEffect, useState } from "react";
 import ProgressBar from "./ProgressBar";
+import { info } from "@tauri-apps/plugin-log";
 
 export interface BoardOptionData {
   hwModel: Board["hwModel"];
@@ -108,7 +109,7 @@ const BoardOption = ({
         total: number;
       }>(`flash-status-update-${board.port}`, (event) => {
         const { boardId, current, total } = event.payload;
-        console.info(`event from "${boardId}"`, event);
+        info(`Received event from "${boardId}": ${JSON.stringify(event)}`);
         setProgress((current / total) * 100);
       });
 

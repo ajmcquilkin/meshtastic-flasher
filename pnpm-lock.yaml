@@ -34,6 +34,9 @@ dependencies:
   '@tauri-apps/plugin-dialog':
     specifier: 2.0.0-alpha.1
     version: 2.0.0-alpha.1
+  '@tauri-apps/plugin-log':
+    specifier: 2.0.0-alpha.1
+    version: 2.0.0-alpha.1
   '@tauri-apps/plugin-os':
     specifier: 2.0.0-alpha.2
     version: 2.0.0-alpha.2
@@ -1910,6 +1913,12 @@ packages:
 
   /@tauri-apps/plugin-dialog@2.0.0-alpha.1:
     resolution: {integrity: sha512-Fqv7zB7qvR6DkcH1dafHcRRNWRSFwj637/G2MQ+kKrmk1ErfV95lcYjpIhmUaETQSPKeogSI6A78kSnO89cvHQ==}
+    dependencies:
+      '@tauri-apps/api': 2.0.0-alpha.6
+    dev: false
+
+  /@tauri-apps/plugin-log@2.0.0-alpha.1:
+    resolution: {integrity: sha512-+7iuIWyshYZKA8NtBb7YRnAMoAjkcN1CR4iNtQh1XBlc0e1CGaDNlk6DdkVuO5/0kT0Qlge+q1SndtpG4gNiLA==}
     dependencies:
       '@tauri-apps/api': 2.0.0-alpha.6
     dev: false
