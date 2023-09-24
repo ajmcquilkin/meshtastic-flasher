@@ -6,7 +6,7 @@ use std::{
     io::{Cursor, Read},
     path::{Path, PathBuf},
 };
-use tauri::Manager;
+use tauri::{AppHandle, Manager};
 use tokio::{fs::File, io::AsyncWriteExt};
 use zip::read::ZipArchive;
 
@@ -293,7 +293,13 @@ pub async fn flash_device(
     // Flash board
 
     if board.architecture.contains("esp") {
-        flash_esp32(firmware_file_name, temp_file_path.clone(), upload_port).await?;
+        flash_esp32(
+            app_handle,
+            firmware_file_name,
+            temp_file_path.clone(),
+            upload_port,
+        )
+        .await?;
     // temp_firmware_path
     } else {
         flash_nrf(firmware_file_name, temp_file_path, upload_port).await?; // temp_firmware_path
@@ -329,6 +335,18 @@ fn get_nrf_firmware_name(slug: String, firmware_version: FirmwareVersion) -> Str
 struct FlashProgress {
     current: usize,
     total: usize,
+    app_handle: AppHandle,
+    board_id: BoardId,
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct BoardId(String);
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct FlashStatusUpdate {
+    board_id: BoardId,
+    current: usize,
+    total: usize,
 }
 
 /// Adapted from @thebentern https://github.com/meshtastic/install/tree/main
@@ -342,6 +360,17 @@ impl ProgressCallbacks for FlashProgress {
     fn update(&mut self, current: usize) {
         println!("update: current: {}", current);
         self.current = current;
+
+        self.app_handle
+            .emit_all(
+                format!("flash-status-update-{}", self.board_id.0).as_str(),
+                FlashStatusUpdate {
+                    board_id: self.board_id.clone(),
+                    current,
+                    total: self.total,
+                },
+            )
+            .expect("App should not fail to emit");
     }
 
     fn finish(&mut self) {
@@ -370,6 +399,7 @@ pub fn get_port_by_name(port: &String) -> Result<serialport::SerialPortInfo, Str
 
 /// Adapted from @thebentern https://github.com/meshtastic/install/tree/main
 pub async fn flash_esp_binary(
+    app_handle: tauri::AppHandle,
     port: String,
     binary_file_path: PathBuf,
     flash_offset: u32,
@@ -390,6 +420,7 @@ pub async fn flash_esp_binary(
     let serial = Interface::new(&serial_port_info, dtr, rts).unwrap();
 
     println!("Connecting to port {}...", port);
+    // ? Why this speed?
     let mut flasher = Flasher::connect(serial, port_info.unwrap(), Some(921600), true)
         .map_err(|e| e.to_string())?;
 
@@ -401,6 +432,8 @@ pub async fn flash_esp_binary(
     let mut progress = FlashProgress {
         total: 0,
         current: 0,
+        app_handle,
+        board_id: BoardId(port.clone()),
     };
 
     while !data.is_empty() {
@@ -425,6 +458,7 @@ pub async fn flash_esp_binary(
 }
 
 async fn flash_esp32(
+    app_handle: tauri::AppHandle,
     firmware_file_name: String,
     firmware_file_path: PathBuf,
     upload_port: String,
@@ -434,7 +468,7 @@ async fn flash_esp32(
         firmware_file_name, upload_port, firmware_file_name
     );
 
-    flash_esp_binary(upload_port, firmware_file_path, 0x010000).await?;
+    flash_esp_binary(app_handle, upload_port, firmware_file_path, 0x010000).await?;
 
     Ok(())
 }

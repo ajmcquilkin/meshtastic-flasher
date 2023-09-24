@@ -14,6 +14,7 @@ import {
   Loader,
 } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
+import { listen } from "@tauri-apps/api/event";
 
 import {
   Board,
@@ -23,6 +24,8 @@ import {
   SerialPortInfo,
 } from "../types";
 import DefaultTooltip from "./generic/DefaultTooltip";
+import { useEffect, useState } from "react";
+import ProgressBar from "./ProgressBar";
 
 export interface BoardOptionData {
   hwModel: Board["hwModel"];
@@ -63,6 +66,8 @@ const BoardOption = ({
   duplicateSelf,
   deleteSelf,
 }: BoardOptionProps) => {
+  const [progress, setProgress] = useState<number>(0);
+
   const boards = availableBoards.reduce(
     (acc, board) => {
       if (board.architecture.includes("esp")) {
@@ -91,13 +96,43 @@ const BoardOption = ({
     }
   );
 
+  // Workaround to allow for async cleanup functions
+  useEffect(() => {
+    let cleanupFn: (() => void) | null = null;
+
+    // Define the async function inside the useEffect
+    async function setupListener() {
+      const unlisten = await listen<{
+        boardId: string;
+        current: number;
+        total: number;
+      }>(`flash-status-update-${board.port}`, (event) => {
+        const { boardId, current, total } = event.payload;
+        console.info(`event from "${boardId}"`, event);
+        setProgress((current / total) * 100);
+      });
+
+      cleanupFn = unlisten;
+    }
+
+    // Execute the async function
+    setupListener();
+
+    // Return the cleanup function
+    return () => {
+      if (cleanupFn) {
+        cleanupFn();
+      }
+    };
+  }, []);
+
   const handlePortClick = async () => {
     const result = await open({
       multiple: false,
       directory: true,
     });
 
-    setPort(result as string); // Not allowing multiple
+    setPort(result as string); // Not allowing multiple dirs, can ignore string[]
   };
 
   return (
@@ -324,10 +359,21 @@ const BoardOption = ({
         <div>
           {requestState === "pending" ? (
             <DefaultTooltip text="Flashing device...">
-              <Loader
-                className="animate-spin text-gray-400"
-                strokeWidth={1.5}
-              />
+              {availableBoards
+                .find((b) => b.hwModel === board.hwModel)
+                ?.architecture.includes("esp") ? (
+                <div className="flex flex-col h-full">
+                  <ProgressBar
+                    className="my-auto w-24"
+                    progressPercentage={progress}
+                  />
+                </div>
+              ) : (
+                <Loader
+                  className="animate-spin text-gray-400"
+                  strokeWidth={1.5}
+                />
+              )}
             </DefaultTooltip>
           ) : requestState === "success" ? (
             <DefaultTooltip text="Device flashed successfully">

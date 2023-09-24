@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { Cpu, Plus } from "lucide-react";
 
@@ -10,129 +10,15 @@ import {
 import BoardOption, { BoardOptionData } from "./components/BoardOption";
 import Titlebar from "./components/Titlebar";
 import DefaultTooltip from "./components/generic/DefaultTooltip";
-
-type BoardOptionsState = {
-  boards: BoardOptionData[];
-};
-
-const initialState: BoardOptionsState = {
-  boards: [],
-};
-
-type Action =
-  | { type: "set_board_hw_model"; payload: { index: number; hwModel: number } }
-  | { type: "set_board_port"; payload: { index: number; port: string } }
-  | { type: "set_board_version"; payload: { index: number; version: string } }
-  | { type: "add_board"; payload: BoardOptionData }
-  | { type: "duplicate_board"; payload: { index: number } }
-  | { type: "delete_board"; payload: { index: number } };
-
-const reducer = (
-  state: BoardOptionsState,
-  action: Action
-): BoardOptionsState => {
-  switch (action.type) {
-    case "set_board_hw_model": {
-      const { index, hwModel } = action.payload;
-
-      // Update only board at index
-      const boards = state.boards.map((board, i) => {
-        if (i === index) {
-          return {
-            ...board,
-            hwModel,
-          };
-        }
-
-        return board;
-      });
-
-      return {
-        ...state,
-        boards,
-      };
-    }
-
-    case "set_board_port": {
-      const { index, port } = action.payload;
-
-      // Update only board at index
-      const boards = state.boards.map((board, i) => {
-        if (i === index) {
-          return {
-            ...board,
-            port,
-          };
-        }
-        return board;
-      });
-
-      return {
-        ...state,
-        boards,
-      };
-    }
-
-    case "set_board_version": {
-      const { index, version } = action.payload;
-
-      // Update only board at index
-      const boards = state.boards.map((board, i) => {
-        if (i === index) {
-          return {
-            ...board,
-            firmwareVersion: version,
-          };
-        }
-        return board;
-      });
-
-      return {
-        ...state,
-        boards,
-      };
-    }
-
-    case "add_board": {
-      const { boards } = state;
-
-      const updated_boards = [...boards, action.payload];
-
-      return {
-        ...state,
-        boards: updated_boards,
-      };
-    }
-
-    case "duplicate_board": {
-      const { index } = action.payload;
-
-      const boards = [...state.boards];
-      const board = boards[index];
-      boards.splice(index, 0, board);
-
-      return {
-        ...state,
-        boards,
-      };
-    }
-
-    case "delete_board": {
-      const { index } = action.payload;
-
-      const boards = [...state.boards];
-      boards.splice(index, 1);
-
-      return {
-        ...state,
-        boards,
-      };
-    }
-
-    default:
-      return state;
-  }
-};
+import { useAppReducer } from "./state/reducer";
+import {
+  createAddBoardAction,
+  createDeleteBoardAction,
+  createDuplicateBoardAction,
+  createSetBoardHwModelAction,
+  createSetBoardPortAction,
+  createSetBoardVersionAction,
+} from "./state/actions";
 
 const App = () => {
   const [listFirmwareReponse, setListFirmwareResponse] =
@@ -147,7 +33,7 @@ const App = () => {
     [port: string]: "pending" | "success" | "error" | null;
   }>({});
 
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useAppReducer();
 
   const getBoards = async () => {
     const boards = (await invoke(
@@ -234,47 +120,19 @@ const App = () => {
                 availableFirmwareVersions={listFirmwareReponse.releases}
                 availableSerialPorts={availableSerialPorts}
                 setFirmwareVersion={(version) => {
-                  dispatch({
-                    type: "set_board_version",
-                    payload: {
-                      index,
-                      version,
-                    },
-                  });
+                  dispatch(createSetBoardVersionAction(index, version));
                 }}
                 deleteSelf={() => {
-                  dispatch({
-                    type: "delete_board",
-                    payload: {
-                      index,
-                    },
-                  });
+                  dispatch(createDeleteBoardAction(index));
                 }}
                 duplicateSelf={() => {
-                  dispatch({
-                    type: "duplicate_board",
-                    payload: {
-                      index,
-                    },
-                  });
+                  dispatch(createDuplicateBoardAction(index));
                 }}
                 setHwModel={(hwModel) => {
-                  dispatch({
-                    type: "set_board_hw_model",
-                    payload: {
-                      index,
-                      hwModel,
-                    },
-                  });
+                  dispatch(createSetBoardHwModelAction(index, hwModel));
                 }}
                 setPort={(port) => {
-                  dispatch({
-                    type: "set_board_port",
-                    payload: {
-                      index,
-                      port,
-                    },
-                  });
+                  dispatch(createSetBoardPortAction(index, port));
                 }}
               />
             ))}
@@ -282,42 +140,21 @@ const App = () => {
 
           <button
             className="flex flex-row justify-center gap-2 px-4 w-full"
-            onClick={() =>
-              dispatch({
-                type: "add_board",
-                payload: {
+            onClick={() => {
+              dispatch(
+                createAddBoardAction({
                   firmwareVersion: listFirmwareReponse.releases.stable[0].id,
                   hwModel: listBoardsResponse[0].hwModel,
                   port: "",
-                },
-              })
-            }
+                })
+              );
+            }}
           >
             <Plus className="text-gray-400" strokeWidth={1.5} />
             <p className="text-gray-700">Add Board</p>
           </button>
         </div>
       )}
-
-      {/* <div>
-        <h2>Firmware Releases</h2>
-        <ul className="list-none">
-          {listFirmwareReponse &&
-            listFirmwareReponse.releases.stable.map((release) => (
-              <li key={release.id}>{release.title}</li>
-            ))}
-        </ul>
-      </div> */}
-
-      {/* <div>
-        <h2>Supported Boards</h2>
-        <ul className="list-none">
-          {listBoardsResponse &&
-            listBoardsResponse.map((board) => (
-              <li key={board.hwModelSlug}>{board.hwModelSlug}</li>
-            ))}
-        </ul>
-      </div> */}
     </div>
   );
 };
