@@ -25,6 +25,7 @@ regex = "1.9.5"
 tauri-plugin-dialog = "2.0.0-alpha.2"
 tauri-plugin-os = "2.0.0-alpha.2"
 tauri-plugin-shell = "2.0.0-alpha.2"
+tauri-plugin-store = "2.0.0-alpha.2"
 tauri-plugin-window = "2.0.0-alpha.2"
 
 [features]

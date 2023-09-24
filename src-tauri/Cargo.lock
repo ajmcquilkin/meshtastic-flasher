@@ -2337,6 +2337,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-os",
  "tauri-plugin-shell",
+ "tauri-plugin-store",
  "tauri-plugin-window",
  "tokio",
  "zip",
@@ -4185,6 +4186,19 @@ dependencies = [
  "serde",
  "serde_json",
  "shared_child",
+ "tauri",
+ "thiserror",
+]
+
+[[package]]
+name = "tauri-plugin-store"
+version = "2.0.0-alpha.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9bfa129f2c332a5260b9f8f9e8c91a7b5160fcd7a94950ba0dee75d9230d0a2d"
+dependencies = [
+ "log",
+ "serde",
+ "serde_json",
  "tauri",
  "thiserror",
 ]

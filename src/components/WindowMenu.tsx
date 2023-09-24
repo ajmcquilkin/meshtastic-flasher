@@ -2,7 +2,11 @@ import { open } from "@tauri-apps/plugin-shell";
 import { getCurrent } from "@tauri-apps/plugin-window";
 import * as Menubar from "@radix-ui/react-menubar";
 
-const WindowMenu = () => {
+export interface WindowMenuProps {
+  showWelcomeScreen: () => void;
+}
+
+const WindowMenu = ({ showWelcomeScreen }: WindowMenuProps) => {
   const currentWindow = getCurrent();
 
   const handleQuitApp = async () => {
@@ -17,7 +21,7 @@ const WindowMenu = () => {
   };
 
   const handleShowWelcomeScreen = async () => {
-    console.log("show welcome screen");
+    showWelcomeScreen();
   };
 
   const handleReportBug = async () => {

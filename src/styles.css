@@ -21,3 +21,22 @@ html {
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 }
+
+.default-overlay {
+  @apply bg-white;
+  @apply rounded-lg;
+  @apply border;
+  @apply border-gray-100;
+  @apply shadow-lg;
+
+  /* Note: nesting of attributes not supported */
+  @media (prefers-color-scheme: dark) {
+    /* @apply bg-gray-800; */
+    --tw-bg-opacity: 1;
+    background-color: rgb(31 41 55 / var(--tw-bg-opacity));
+
+    /* @apply border-gray-700; */
+    --tw-border-opacity: 1;
+    border-color: rgb(55 65 81 / var(--tw-border-opacity));
+  }
+}

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import { Cpu, Plus } from "lucide-react";
+import { Store } from "@tauri-apps/plugin-store";
+import * as Dialog from "@radix-ui/react-dialog";
+import { ArrowUpFromLine, Plus } from "lucide-react";
 
 import {
   ListBoardsResponse,
@@ -19,6 +21,7 @@ import {
   createSetBoardPortAction,
   createSetBoardVersionAction,
 } from "./state/actions";
+import WelcomeScreen from "./components/WelcomeScreenDialog";
 
 const App = () => {
   const [listFirmwareReponse, setListFirmwareResponse] =
@@ -33,7 +36,23 @@ const App = () => {
     [port: string]: "pending" | "success" | "error" | null;
   }>({});
 
+  const [showWelcomeScreen, setShowWelcomeScreen] = useState(false);
+
   const [state, dispatch] = useAppReducer();
+
+  useEffect(() => {
+    const handleCreateStore = async () => {
+      const store = new Store(".settings.dat");
+      const hasSeenWelcomeScreen = await store.get("hasSeenWelcomeScreen");
+
+      if (!hasSeenWelcomeScreen) {
+        setShowWelcomeScreen(true);
+        await store.set("hasSeenWelcomeScreen", true);
+      }
+    };
+
+    handleCreateStore();
+  }, []);
 
   const getBoards = async () => {
     const boards = (await invoke(
@@ -89,73 +108,80 @@ const App = () => {
   };
 
   return (
-    <div className="relative w-full min-h-screen bg-white">
-      <Titlebar />
+    <Dialog.Root open={showWelcomeScreen} onOpenChange={setShowWelcomeScreen}>
+      <div className="relative w-full min-h-screen bg-white">
+        <Titlebar showWelcomeScreen={() => setShowWelcomeScreen(true)} />
 
-      <div className="absolute bottom-9 right-9">
-        <DefaultTooltip text="Flash listed devices">
-          <button
-            className="w-12 h-12 border border-gray-100 bg-gray-700 rounded-full shadow-lg"
-            onClick={handleFlashDevices}
-          >
-            <Cpu className="m-auto text-gray-100" strokeWidth={1.5} />
-          </button>
-        </DefaultTooltip>
-      </div>
+        <WelcomeScreen />
 
-      {listBoardsResponse && listFirmwareReponse && availableSerialPorts && (
-        <div className="flex flex-col gap-4 mx-auto max-w-[900px]">
-          <div className="flex flex-col gap-4 p-4">
-            {state.boards.map((boardOption, index) => (
-              <BoardOption
-                key={index}
-                board={boardOption}
-                activelySupported={
-                  listBoardsResponse.find(
-                    (b) => b.hwModel === boardOption.hwModel
-                  )?.activelySupported ?? false
-                }
-                requestState={flashStates[boardOption.port] ?? null}
-                availableBoards={listBoardsResponse}
-                availableFirmwareVersions={listFirmwareReponse.releases}
-                availableSerialPorts={availableSerialPorts}
-                setFirmwareVersion={(version) => {
-                  dispatch(createSetBoardVersionAction(index, version));
-                }}
-                deleteSelf={() => {
-                  dispatch(createDeleteBoardAction(index));
-                }}
-                duplicateSelf={() => {
-                  dispatch(createDuplicateBoardAction(index));
-                }}
-                setHwModel={(hwModel) => {
-                  dispatch(createSetBoardHwModelAction(index, hwModel));
-                }}
-                setPort={(port) => {
-                  dispatch(createSetBoardPortAction(index, port));
-                }}
+        <div className="absolute bottom-9 right-9">
+          <DefaultTooltip text="Flash devices">
+            <button
+              className="w-12 h-12 border border-gray-100 bg-gray-700 rounded-full shadow-lg"
+              onClick={handleFlashDevices}
+            >
+              <ArrowUpFromLine
+                className="m-auto text-gray-100"
+                strokeWidth={1.5}
               />
-            ))}
-          </div>
-
-          <button
-            className="flex flex-row justify-center gap-2 px-4 w-full"
-            onClick={() => {
-              dispatch(
-                createAddBoardAction({
-                  firmwareVersion: listFirmwareReponse.releases.stable[0].id,
-                  hwModel: listBoardsResponse[0].hwModel,
-                  port: "",
-                })
-              );
-            }}
-          >
-            <Plus className="text-gray-400" strokeWidth={1.5} />
-            <p className="text-gray-700">Add Board</p>
-          </button>
+            </button>
+          </DefaultTooltip>
         </div>
-      )}
-    </div>
+
+        {listBoardsResponse && listFirmwareReponse && availableSerialPorts && (
+          <div className="flex flex-col gap-4 mx-auto max-w-[900px]">
+            <div className="flex flex-col gap-4 p-4">
+              {state.boards.map((boardOption, index) => (
+                <BoardOption
+                  key={index}
+                  board={boardOption}
+                  activelySupported={
+                    listBoardsResponse.find(
+                      (b) => b.hwModel === boardOption.hwModel
+                    )?.activelySupported ?? false
+                  }
+                  requestState={flashStates[boardOption.port] ?? null}
+                  availableBoards={listBoardsResponse}
+                  availableFirmwareVersions={listFirmwareReponse.releases}
+                  availableSerialPorts={availableSerialPorts}
+                  setFirmwareVersion={(version) => {
+                    dispatch(createSetBoardVersionAction(index, version));
+                  }}
+                  deleteSelf={() => {
+                    dispatch(createDeleteBoardAction(index));
+                  }}
+                  duplicateSelf={() => {
+                    dispatch(createDuplicateBoardAction(index));
+                  }}
+                  setHwModel={(hwModel) => {
+                    dispatch(createSetBoardHwModelAction(index, hwModel));
+                  }}
+                  setPort={(port) => {
+                    dispatch(createSetBoardPortAction(index, port));
+                  }}
+                />
+              ))}
+            </div>
+
+            <button
+              className="flex flex-row justify-center gap-2 px-4 w-full"
+              onClick={() => {
+                dispatch(
+                  createAddBoardAction({
+                    firmwareVersion: listFirmwareReponse.releases.stable[0].id,
+                    hwModel: listBoardsResponse[0].hwModel,
+                    port: "",
+                  })
+                );
+              }}
+            >
+              <Plus className="text-gray-400" strokeWidth={1.5} />
+              <p className="text-gray-700">Add Board</p>
+            </button>
+          </div>
+        )}
+      </div>
+    </Dialog.Root>
   );
 };
 

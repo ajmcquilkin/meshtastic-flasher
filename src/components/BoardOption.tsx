@@ -408,13 +408,13 @@ const BoardOption = ({
         </div>
 
         <button type="button" onClick={duplicateSelf}>
-          <DefaultTooltip text="Duplicate Board Option">
+          <DefaultTooltip text="Duplicate configuration">
             <Copy className="text-gray-400" strokeWidth={1.5} />
           </DefaultTooltip>
         </button>
 
         <button type="button" onClick={deleteSelf}>
-          <DefaultTooltip text="Delete Board Option">
+          <DefaultTooltip text="Delete configuration">
             <Trash2 className="text-gray-400" strokeWidth={1.5} />
           </DefaultTooltip>
         </button>

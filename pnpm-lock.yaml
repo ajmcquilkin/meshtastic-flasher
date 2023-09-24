@@ -25,6 +25,9 @@ dependencies:
   '@radix-ui/react-tooltip':
     specifier: ^1.0.6
     version: 1.0.6(@types/react-dom@18.2.7)(@types/react@18.2.15)(react-dom@18.2.0)(react@18.2.0)
+  '@radix-ui/react-visually-hidden':
+    specifier: ^1.0.3
+    version: 1.0.3(@types/react-dom@18.2.7)(@types/react@18.2.15)(react-dom@18.2.0)(react@18.2.0)
   '@tauri-apps/api':
     specifier: 2.0.0-alpha.8
     version: 2.0.0-alpha.8
@@ -37,6 +40,9 @@ dependencies:
   '@tauri-apps/plugin-shell':
     specifier: 2.0.0-alpha.1
     version: 2.0.0-alpha.1
+  '@tauri-apps/plugin-store':
+    specifier: github:tauri-apps/tauri-plugin-store#v2
+    version: github.com/tauri-apps/tauri-plugin-store/9f02a88a501b5f26ffb8fd45dca451e44fb54f79
   '@tauri-apps/plugin-window':
     specifier: 2.0.0-alpha.1
     version: 2.0.0-alpha.1
@@ -5724,3 +5730,11 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
     dev: true
+
+  github.com/tauri-apps/tauri-plugin-store/9f02a88a501b5f26ffb8fd45dca451e44fb54f79:
+    resolution: {tarball: https://codeload.github.com/tauri-apps/tauri-plugin-store/tar.gz/9f02a88a501b5f26ffb8fd45dca451e44fb54f79}
+    name: '@tauri-apps/plugin-store'
+    version: 2.0.0-alpha.1
+    dependencies:
+      '@tauri-apps/api': 2.0.0-alpha.8
+    dev: false
