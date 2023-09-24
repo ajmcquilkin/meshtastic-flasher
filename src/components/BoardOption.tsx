@@ -154,7 +154,10 @@ const BoardOption = ({
           value={`${board.hwModel}`}
           onValueChange={(board) => setHwModel(parseInt(board))}
         >
-          <Select.Trigger className="flex flex-row gap-2" aria-label="Food">
+          <Select.Trigger
+            className="flex flex-row gap-2 text-gray-700"
+            aria-label="Devices"
+          >
             <Select.Value placeholder="Device" />
             <Select.Icon className="my-auto">
               <ChevronDownIcon />
@@ -178,7 +181,9 @@ const BoardOption = ({
                       className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer"
                       value={`${board.hwModel}`}
                     >
-                      <Select.ItemText>{board.hwModelSlug}</Select.ItemText>
+                      <Select.ItemText className="text-gray-500">
+                        {board.hwModelSlug}
+                      </Select.ItemText>
                       <Select.ItemIndicator className="ml-auto my-auto">
                         <CheckIcon />
                       </Select.ItemIndicator>
@@ -198,7 +203,9 @@ const BoardOption = ({
                       className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer"
                       value={`${board.hwModel}`}
                     >
-                      <Select.ItemText>{board.hwModelSlug}</Select.ItemText>
+                      <Select.ItemText className="text-gray-500">
+                        {board.hwModelSlug}
+                      </Select.ItemText>
                       <Select.ItemIndicator className="ml-auto my-auto">
                         <CheckIcon />
                       </Select.ItemIndicator>
@@ -218,7 +225,9 @@ const BoardOption = ({
                       className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer"
                       value={`${board.hwModel}`}
                     >
-                      <Select.ItemText>{board.hwModelSlug}</Select.ItemText>
+                      <Select.ItemText className="text-gray-500">
+                        {board.hwModelSlug}
+                      </Select.ItemText>
                       <Select.ItemIndicator className="ml-auto my-auto">
                         <CheckIcon />
                       </Select.ItemIndicator>
@@ -241,7 +250,10 @@ const BoardOption = ({
             value={`${board.port}`}
             onValueChange={(port) => setPort(port)}
           >
-            <Select.Trigger className="flex flex-row gap-2" aria-label="Food">
+            <Select.Trigger
+              className="flex flex-row gap-2 text-gray-700"
+              aria-label="Serial ports"
+            >
               <Select.Value placeholder="Serial Port" />
               <Select.Icon className="my-auto">
                 <ChevronDownIcon />
@@ -265,7 +277,9 @@ const BoardOption = ({
                         className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer"
                         value={port.port_name}
                       >
-                        <Select.ItemText>{port.port_name}</Select.ItemText>
+                        <Select.ItemText className="text-gray-500">
+                          {port.port_name}
+                        </Select.ItemText>
                         <Select.ItemIndicator className="my-auto">
                           <CheckIcon />
                         </Select.ItemIndicator>
@@ -283,7 +297,7 @@ const BoardOption = ({
         ) : (
           <button type="button" onClick={handlePortClick}>
             <DefaultTooltip text="Select Port">
-              <p>{board.port || "Select Port"}</p>
+              <p className="text-gray-500">{board.port || "Select Port"}</p>
             </DefaultTooltip>
           </button>
         )}
@@ -292,7 +306,10 @@ const BoardOption = ({
           value={`${board.firmwareVersion}`}
           onValueChange={(version) => setFirmwareVersion(version)}
         >
-          <Select.Trigger className="flex flex-row gap-2" aria-label="Food">
+          <Select.Trigger
+            className="flex flex-row gap-2 text-gray-700"
+            aria-label="Firmware versions"
+          >
             <Select.Value placeholder="Firmware Version" />
             <Select.Icon className="my-auto">
               <ChevronDownIcon />
@@ -317,7 +334,9 @@ const BoardOption = ({
                       className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer"
                       value={version.id}
                     >
-                      <Select.ItemText>{version.id}</Select.ItemText>
+                      <Select.ItemText className="text-gray-500">
+                        {version.id}
+                      </Select.ItemText>
                       <Select.ItemIndicator className="my-auto">
                         <CheckIcon />
                       </Select.ItemIndicator>
@@ -338,7 +357,9 @@ const BoardOption = ({
                       className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer"
                       value={version.id}
                     >
-                      <Select.ItemText>{version.id}</Select.ItemText>
+                      <Select.ItemText className="text-gray-500">
+                        {version.id}
+                      </Select.ItemText>
                       <Select.ItemIndicator className="my-auto">
                         <CheckIcon />
                       </Select.ItemIndicator>
