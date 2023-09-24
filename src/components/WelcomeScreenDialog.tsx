@@ -13,7 +13,7 @@ const WelcomeScreenDialog = () => {
             <img src={Rak19007Render} alt="Render of RAK19007 board" />
           </div>
 
-          <div className="flex-1 flex flex-col gap-4 px-9 py-7 w-96 overflow-auto">
+          <div className="flex-1 flex flex-col gap-4 pl-9 pr-11 py-7 w-96 overflow-auto">
             <Dialog.Title className="text-base font-medium text-gray-700">
               Welcome
             </Dialog.Title>
