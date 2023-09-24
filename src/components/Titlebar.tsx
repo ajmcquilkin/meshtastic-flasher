@@ -1,15 +1,16 @@
 import { WindowTitlebar } from "tauri-controls";
 import MeshLogoDark from "../assets/Mesh_Logo_Dark.svg";
+import WindowMenu from "./WindowMenu";
 
 const Titlebar = () => {
   return (
-    <WindowTitlebar className="">
-      <div className="flex flex-row gap-2 mx-3">
+    <WindowTitlebar className="" data-tauri-drag-region>
+      <div className="flex flex-row gap-3 mx-3">
         <img src={MeshLogoDark} className="my-auto h-3" />
 
-        <p className="my-auto text-sm font-normal text-gray-700">
-          Meshtastic Flasher
-        </p>
+        <div className="flex flex-row align-middle my-auto gap-3">
+          <WindowMenu />
+        </div>
       </div>
     </WindowTitlebar>
   );

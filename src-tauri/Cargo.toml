@@ -23,8 +23,9 @@ zip = "0.6.6"
 serialport = { version = "4.2.2", features = ["serde"] }
 regex = "1.9.5"
 tauri-plugin-dialog = "2.0.0-alpha.2"
-tauri-plugin-window = "2.0.0-alpha.2"
 tauri-plugin-os = "2.0.0-alpha.2"
+tauri-plugin-shell = "2.0.0-alpha.2"
+tauri-plugin-window = "2.0.0-alpha.2"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

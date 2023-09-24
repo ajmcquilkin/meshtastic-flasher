@@ -11,12 +11,12 @@ fn main() {
             commands::fetch_supported_boards,
             commands::get_available_serial_ports,
             commands::flash_device,
-            // commands::download_release_assets,
         ])
         .manage(state::BoardsState::default())
         .manage(state::FirmwareReleasesState::default())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_window::init())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
