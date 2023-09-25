@@ -16,6 +16,7 @@ fn main() {
         ])
         .manage(state::BoardsState::default())
         .manage(state::FirmwareReleasesState::default())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(
             tauri_plugin_log::Builder::default()
@@ -26,11 +27,11 @@ fn main() {
                     Target::new(TargetKind::Stdout)
                         .filter(|m| !m.target().contains(&WEBVIEW_TARGET.to_lowercase())),
                     Target::new(TargetKind::LogDir {
-                        file_name: Some("webview".into()),
+                        file_name: Some("webview.log".to_string()),
                     })
                     .filter(|m| m.target().contains(&WEBVIEW_TARGET.to_lowercase())),
                     Target::new(TargetKind::LogDir {
-                        file_name: Some("rust".into()),
+                        file_name: Some("backend.log".to_string()),
                     })
                     .filter(|m| !m.target().contains(&WEBVIEW_TARGET.to_lowercase())),
                 ])

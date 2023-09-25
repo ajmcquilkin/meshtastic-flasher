@@ -37,7 +37,7 @@ const App = () => {
     [port: string]: "pending" | "success" | "error" | null;
   }>({});
 
-  const [showWelcomeScreen, setShowWelcomeScreen] = useState(true);
+  const [showWelcomeScreen, setShowWelcomeScreen] = useState(false);
 
   const [state, dispatch] = useAppReducer();
 
@@ -48,7 +48,10 @@ const App = () => {
 
       if (!hasSeenWelcomeScreen) {
         setShowWelcomeScreen(true);
+        info("Persisting that user has seen welcome screen");
         await store.set("hasSeenWelcomeScreen", true);
+      } else {
+        info("User has already seen welcome screen");
       }
     };
 

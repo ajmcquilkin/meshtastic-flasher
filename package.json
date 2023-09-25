@@ -1,7 +1,7 @@
 {
-  "name": "meshtastic-flasher",
+  "name": "meshtastic-desktop-flasher",
   "version": "0.2.0",
-  "description": "Meshtastic GUI Flasher",
+  "description": "Meshtastic Desktop Flasher",
   "license": "GPL-3.0-only",
   "type": "module",
   "scripts": {
@@ -26,6 +26,7 @@
     "@radix-ui/react-tooltip": "^1.0.6",
     "@radix-ui/react-visually-hidden": "^1.0.3",
     "@tauri-apps/api": "2.0.0-alpha.8",
+    "@tauri-apps/plugin-clipboard-manager": "2.0.0-alpha.1",
     "@tauri-apps/plugin-dialog": "2.0.0-alpha.1",
     "@tauri-apps/plugin-log": "2.0.0-alpha.1",
     "@tauri-apps/plugin-os": "2.0.0-alpha.2",

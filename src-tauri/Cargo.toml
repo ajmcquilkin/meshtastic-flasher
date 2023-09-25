@@ -22,6 +22,7 @@ reqwest = { version = "0.11.20", features = ["json"] }
 zip = "0.6.6"
 serialport = { version = "4.2.2", features = ["serde"] }
 regex = "1.9.5"
+tauri-plugin-clipboard-manager = "2.0.0-alpha.2"
 tauri-plugin-dialog = "2.0.0-alpha.2"
 tauri-plugin-log = "2.0.0-alpha"
 tauri-plugin-os = "2.0.0-alpha.2"
