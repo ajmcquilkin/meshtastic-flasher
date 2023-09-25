@@ -711,7 +711,7 @@ pub async fn flash_esp_binary(
     log::info!("Connecting to port {}...", port);
 
     // ? Why this speed?
-    let mut flasher = match Flasher::connect(serial, port_info, Some(921600), true) {
+    let mut flasher = match Flasher::connect(serial, port_info, Some(115_200), true) {
         Ok(flasher) => flasher,
         Err(e) => {
             log::error!("Error while connecting to port {}: {}", port, e);
@@ -732,6 +732,8 @@ pub async fn flash_esp_binary(
     };
 
     while !data.is_empty() {
+        log::debug!("Flashing {} bytes of {} bytes", chunk_size, data.len());
+
         let (chunk, rest) = if data.len() > chunk_size {
             data.split_at(chunk_size)
         } else {
@@ -746,9 +748,14 @@ pub async fn flash_esp_binary(
             }
         };
 
+        log::debug!("Successfully flashed {} bytes", chunk.len());
+
         offset += chunk.len() as u32;
         data = rest.to_vec();
     }
+
+    log::info!("Finished uploading data to board");
+
     Ok(())
 }
 
