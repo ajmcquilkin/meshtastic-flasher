@@ -622,6 +622,8 @@ impl ProgressCallbacks for FlashProgress {
 
 /// Adapted from @thebentern https://github.com/meshtastic/install/tree/main
 pub fn get_port_by_name(port: &String) -> Result<serialport::SerialPortInfo, String> {
+    log::info!("Getting port by name: {}", port);
+
     let available_ports = match serialport::available_ports() {
         Ok(available_ports) => available_ports,
         Err(e) => {
@@ -629,6 +631,8 @@ pub fn get_port_by_name(port: &String) -> Result<serialport::SerialPortInfo, Str
             return Err(format!("Error while getting available ports: {}", e));
         }
     };
+
+    log::debug!("Available ports: {:?}", available_ports);
 
     let port_info = match available_ports.into_iter().find(|p| {
         match &p.port_type {
@@ -755,10 +759,9 @@ async fn flash_esp32(
     upload_port: String,
 ) -> Result<(), String> {
     log::info!(
-        "ESP32 board detected, will use file: {} -> {}/{}",
+        "ESP32 board detected, will use file: {} -> {}",
         firmware_file_name,
-        upload_port,
-        firmware_file_name
+        upload_port
     );
 
     flash_esp_binary(app_handle, upload_port, firmware_file_path, 0x010000).await?;
