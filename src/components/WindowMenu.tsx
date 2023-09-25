@@ -13,6 +13,7 @@ import {
   ExitIcon,
 } from "@radix-ui/react-icons";
 import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/tauri";
 
 export interface WindowMenuProps {
   showWelcomeScreen: () => void;
@@ -32,8 +33,7 @@ const WindowMenu = ({ showWelcomeScreen }: WindowMenuProps) => {
 
   const handleQuitApp = async () => {
     try {
-      // Close current window to quit, only works while app is single-windowed
-      await currentWindow.close();
+      await invoke("quit_application");
     } catch (err) {
       error(`Failed to close current window: ${err}`);
     }

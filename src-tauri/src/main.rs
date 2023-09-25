@@ -11,8 +11,9 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             commands::fetch_firmware_releases,
             commands::fetch_supported_boards,
-            commands::get_available_serial_ports,
             commands::flash_device,
+            commands::get_available_serial_ports,
+            commands::quit_application,
         ])
         .manage(state::BoardsState::default())
         .manage(state::FirmwareReleasesState::default())

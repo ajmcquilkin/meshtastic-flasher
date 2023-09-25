@@ -864,3 +864,11 @@ async fn flash_nrf(
 
     Ok(())
 }
+
+#[tauri::command]
+pub async fn quit_application(app_handle: tauri::AppHandle) -> Result<(), String> {
+    log::info!("Called \"quit_application\" command with no args");
+
+    app_handle.exit(0);
+    Ok(())
+}
