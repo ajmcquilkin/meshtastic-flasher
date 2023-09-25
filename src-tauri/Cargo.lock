@@ -2440,8 +2440,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "meshtastic-flasher"
-version = "0.2.0"
+name = "meshtastic-desktop-flasher"
+version = "0.2.1"
 dependencies = [
  "espflash",
  "log",
