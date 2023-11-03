@@ -10,6 +10,7 @@ use tauri::{AppHandle, Manager};
 use tokio::{fs::File, io::AsyncWriteExt};
 use zip::read::ZipArchive;
 
+use crate::boards::file_name_slug_from_hw_model_slug;
 use crate::state;
 
 pub mod api {
@@ -400,7 +401,7 @@ pub async fn flash_device(
             new_firmware_directory.display()
         );
 
-        match tokio::fs::create_dir(new_firmware_directory).await {
+        match tokio::fs::create_dir_all(new_firmware_directory).await {
             Ok(_) => (),
             Err(e) => {
                 log::error!("Error while creating firmware directory: {}", e.to_string());
@@ -425,11 +426,30 @@ pub async fn flash_device(
         }
     };
 
+    let file_name_slug = match file_name_slug_from_hw_model_slug(board.hw_model_slug.clone()) {
+        Some(file_name_slug) => file_name_slug,
+        None => {
+            log::error!(
+                "No file name slug found for hardware model slug {}",
+                board.hw_model_slug
+            );
+
+            return Err(format!(
+                "No file name slug found for hardware model slug {}",
+                board.hw_model_slug
+            ));
+        }
+    };
+
     let firmware_file_name = if board.architecture.contains("esp") {
-        get_esp_firmware_name(board.hw_model_slug.clone(), firmware_version)
+        get_esp_firmware_name(file_name_slug, firmware_version)
+    } else if board.architecture.contains("nrf") {
+        get_nrf_firmware_name(file_name_slug, firmware_version)
+    } else if board.architecture.contains("pico") {
+        get_pico_firmware_name(file_name_slug, firmware_version)
     } else {
-        // This will fail with a pico board
-        get_nrf_firmware_name(board.hw_model_slug.clone(), firmware_version)
+        log::error!("Unsupported architecture: {}", board.architecture);
+        return Err(format!("Unsupported architecture: {}", board.architecture));
     };
 
     log::info!("Built firmware file name: {}", firmware_file_name);
@@ -533,8 +553,13 @@ pub async fn flash_device(
             upload_port,
         )
         .await?;
-    } else {
+    } else if board.architecture.contains("nrf") {
         flash_nrf(firmware_file_name, temp_file_path, upload_port).await?;
+    // } else if board.architecture.contains("pico") {
+    //     flash_pico(firmware_file_name, temp_file_path, upload_port).await?;
+    } else {
+        log::error!("Unsupported architecture: {}", board.architecture);
+        return Err(format!("Unsupported architecture: {}", board.architecture));
     }
 
     log::info!("Successfully flashed firmware");
@@ -554,6 +579,17 @@ fn get_esp_firmware_name(slug: String, firmware_version: FirmwareVersion) -> Str
 }
 
 fn get_nrf_firmware_name(slug: String, firmware_version: FirmwareVersion) -> String {
+    format!(
+        "firmware-{}-{}.{}.{}.{}.uf2",
+        slug.to_lowercase(),
+        firmware_version.major_version,
+        firmware_version.minor_version,
+        firmware_version.patch_version,
+        firmware_version.version_hash
+    )
+}
+
+fn get_pico_firmware_name(slug: String, firmware_version: FirmwareVersion) -> String {
     format!(
         "firmware-{}-{}.{}.{}.{}.uf2",
         slug.to_lowercase(),
@@ -710,7 +746,6 @@ pub async fn flash_esp_binary(
 
     log::info!("Connecting to port {}...", port);
 
-    // ? Why this speed?
     let mut flasher = match Flasher::connect(serial, port_info, Some(115_200), true) {
         Ok(flasher) => flasher,
         Err(e) => {
