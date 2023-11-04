@@ -118,7 +118,10 @@ const App = () => {
   return (
     <Dialog.Root open={showWelcomeScreen} onOpenChange={setShowWelcomeScreen}>
       <div className="relative w-full min-h-screen bg-white">
-        <Titlebar showWelcomeScreen={() => setShowWelcomeScreen(true)} />
+        <Titlebar
+          showWelcomeScreen={() => setShowWelcomeScreen(true)}
+          refreshSerialPorts={() => getAvailableSerialPorts()}
+        />
 
         <WelcomeScreen />
 

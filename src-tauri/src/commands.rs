@@ -10,7 +10,6 @@ use tauri::{AppHandle, Manager};
 use tokio::{fs::File, io::AsyncWriteExt};
 use zip::read::ZipArchive;
 
-use crate::boards::file_name_slug_from_hw_model_slug;
 use crate::state;
 
 pub mod api {
@@ -27,6 +26,7 @@ pub mod api {
             pub platformio_target: String,
             pub architecture: String,
             pub actively_supported: bool,
+            pub display_name: String,
         }
     }
 
@@ -426,27 +426,12 @@ pub async fn flash_device(
         }
     };
 
-    let file_name_slug = match file_name_slug_from_hw_model_slug(board.hw_model_slug.clone()) {
-        Some(file_name_slug) => file_name_slug,
-        None => {
-            log::error!(
-                "No file name slug found for hardware model slug {}",
-                board.hw_model_slug
-            );
-
-            return Err(format!(
-                "No file name slug found for hardware model slug {}",
-                board.hw_model_slug
-            ));
-        }
-    };
-
     let firmware_file_name = if board.architecture.contains("esp") {
-        get_esp_firmware_name(file_name_slug, firmware_version)
+        get_esp_firmware_name(board.platformio_target, firmware_version)
     } else if board.architecture.contains("nrf") {
-        get_nrf_firmware_name(file_name_slug, firmware_version)
+        get_nrf_firmware_name(board.platformio_target, firmware_version)
     } else if board.architecture.contains("pico") {
-        get_pico_firmware_name(file_name_slug, firmware_version)
+        get_pico_firmware_name(board.platformio_target, firmware_version)
     } else {
         log::error!("Unsupported architecture: {}", board.architecture);
         return Err(format!("Unsupported architecture: {}", board.architecture));

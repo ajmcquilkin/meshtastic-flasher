@@ -11,15 +11,20 @@ import {
   EnterFullScreenIcon,
   ExitFullScreenIcon,
   ExitIcon,
+  ReloadIcon,
 } from "@radix-ui/react-icons";
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 
 export interface WindowMenuProps {
   showWelcomeScreen: () => void;
+  refreshSerialPorts: () => void;
 }
 
-const WindowMenu = ({ showWelcomeScreen }: WindowMenuProps) => {
+const WindowMenu = ({
+  showWelcomeScreen,
+  refreshSerialPorts,
+}: WindowMenuProps) => {
   const currentWindow = getCurrent();
   const [isFullscreen, setFullscreen] = useState(false);
 
@@ -30,6 +35,10 @@ const WindowMenu = ({ showWelcomeScreen }: WindowMenuProps) => {
 
     getIsFullscreen();
   }, [currentWindow]);
+
+  const handleRefreshSerialPorts = async () => {
+    refreshSerialPorts();
+  };
 
   const handleQuitApp = async () => {
     try {
@@ -107,6 +116,13 @@ const WindowMenu = ({ showWelcomeScreen }: WindowMenuProps) => {
             sideOffset={5}
             alignOffset={-3}
           >
+            <Menubar.Item
+              className="flex flex-row gap-3 cursor-pointer"
+              onSelect={handleRefreshSerialPorts}
+            >
+              <ReloadIcon className="my-auto text-gray-600" />
+              <p className="text-sm text-gray-600">Refresh Serial Ports</p>
+            </Menubar.Item>
             <Menubar.Item
               className="flex flex-row gap-3 cursor-pointer"
               onSelect={handleQuitApp}

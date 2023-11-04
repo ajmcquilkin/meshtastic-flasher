@@ -3,7 +3,6 @@
 
 use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
 
-pub mod boards;
 pub mod commands;
 pub mod state;
 

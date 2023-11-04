@@ -183,7 +183,7 @@ const BoardOption = ({
                       value={`${board.hwModel}`}
                     >
                       <Select.ItemText className="text-gray-500">
-                        {board.hwModelSlug}
+                        {board.displayName}
                       </Select.ItemText>
                       <Select.ItemIndicator className="ml-auto my-auto">
                         <CheckIcon />
@@ -205,7 +205,7 @@ const BoardOption = ({
                       value={`${board.hwModel}`}
                     >
                       <Select.ItemText className="text-gray-500">
-                        {board.hwModelSlug}
+                        {board.displayName}
                       </Select.ItemText>
                       <Select.ItemIndicator className="ml-auto my-auto">
                         <CheckIcon />
@@ -227,7 +227,7 @@ const BoardOption = ({
                       value={`${board.hwModel}`}
                     >
                       <Select.ItemText className="text-gray-500">
-                        {board.hwModelSlug}
+                        {board.displayName}
                       </Select.ItemText>
                       <Select.ItemIndicator className="ml-auto my-auto">
                         <CheckIcon />

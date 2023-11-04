@@ -25,6 +25,7 @@ export type Board = {
   platformioTarget: string;
   architecture: string;
   activelySupported: boolean;
+  displayName: string;
 };
 
 export type SerialPortInfo = {
