@@ -21,7 +21,7 @@ import {
 } from "../types/backend";
 import DefaultTooltip from "./generic/DefaultTooltip";
 import { useEffect, useState } from "react";
-import ProgressBar from "./ProgressBar";
+// import ProgressBar from "./ProgressBar";
 import { info } from "@tauri-apps/plugin-log";
 
 export interface BoardOptionProps {
@@ -57,7 +57,7 @@ const BoardOption = ({
   duplicateSelf,
   deleteSelf,
 }: BoardOptionProps) => {
-  const [progress, setProgress] = useState<number>(0);
+  const [_, setProgress] = useState<number>(0);
 
   // Sort first by supported then by alphabetical
   const groupedBoards = groupBy(
