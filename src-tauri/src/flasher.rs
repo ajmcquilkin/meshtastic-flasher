@@ -162,6 +162,8 @@ pub async fn flash_board(
     upload_port: String,
     board: Board,
 ) -> Result<(), String> {
+    log::debug!("Flashing board with architecture {}", board.architecture);
+
     if board.architecture.contains("esp") {
         log::info!(
             "ESP32 board detected, will use firmware file: {} -> {}",
@@ -185,8 +187,14 @@ pub async fn flash_board(
         );
 
         flash_nrf(firmware_file_name, temp_firmware_file_path, upload_port).await?;
-    // } else if board.architecture.contains("pico") {
-    //     flash_pico(firmware_file_name, temp_file_path, upload_port).await?;
+    } else if board.architecture.contains("rp2040") {
+        log::info!(
+            "Pico board detected, will use firmware file: {} -> {}",
+            firmware_file_name,
+            upload_port
+        );
+
+        flash_nrf(firmware_file_name, temp_firmware_file_path, upload_port).await?;
     } else {
         log::error!("Unsupported architecture: {}", board.architecture);
         return Err(format!("Unsupported architecture: {}", board.architecture));

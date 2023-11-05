@@ -58,7 +58,7 @@ pub fn get_firmware_file_name(
         get_esp_firmware_name(&board.platformio_target, parsed_firmware_version)
     } else if board.architecture.contains("nrf") {
         get_nrf_firmware_name(&board.platformio_target, parsed_firmware_version)
-    } else if board.architecture.contains("pico") {
+    } else if board.architecture.contains("rp2040") {
         get_pico_firmware_name(&board.platformio_target, parsed_firmware_version)
     } else {
         log::error!("Unsupported architecture: {}", board.architecture);
