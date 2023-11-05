@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use tokio::sync::Mutex;
 
-use crate::commands::api::{boards::ListBoardsResponse, firmware::ListFirmwareResponse};
+use crate::api::{boards::ListBoardsResponse, firmware::ListFirmwareResponse};
 
 pub type FirmwareReleasesStateInner = Arc<Mutex<ListFirmwareResponse>>;
 

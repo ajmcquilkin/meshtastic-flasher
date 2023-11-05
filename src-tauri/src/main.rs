@@ -3,7 +3,10 @@
 
 use tauri_plugin_log::{Target, TargetKind, WEBVIEW_TARGET};
 
+pub mod api;
 pub mod commands;
+pub mod flasher;
+pub mod fs;
 pub mod state;
 
 fn main() {

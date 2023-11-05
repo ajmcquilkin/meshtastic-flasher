@@ -2443,6 +2443,7 @@ dependencies = [
 name = "meshtastic-desktop-flasher"
 version = "0.2.3"
 dependencies = [
+ "bytes",
  "espflash",
  "log",
  "regex",
