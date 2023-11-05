@@ -1,6 +1,6 @@
 {
   "name": "meshtastic-desktop-flasher",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Meshtastic Desktop Flasher",
   "license": "GPL-3.0-only",
   "type": "module",

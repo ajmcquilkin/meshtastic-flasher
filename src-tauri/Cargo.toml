@@ -1,6 +1,6 @@
 [package]
 name = "meshtastic-desktop-flasher"
-version = "0.2.4"
+version = "0.2.5"
 description = "A desktop application for flashing Meshtaic devices"
 authors = ["Adam McQuilkin"]
 license = "GPL-3.0"
