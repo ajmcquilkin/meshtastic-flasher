@@ -138,45 +138,42 @@ const BoardOption = ({
               <Select.Viewport className="">
                 {Object.entries(groupedBoards)
                   .sort(([a], [b]) => a.localeCompare(b))
-                  .map(([architecture, boards], index) => {
-                    console.log(architecture, boards);
-                    return (
-                      <>
-                        <Select.Group>
-                          <Select.Label className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">
-                            {architecture.toLocaleUpperCase()}
-                          </Select.Label>
+                  .map(([architecture, boards], index) => (
+                    <>
+                      <Select.Group>
+                        <Select.Label className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">
+                          {architecture.toLocaleUpperCase()}
+                        </Select.Label>
 
-                          {boards.map((board) => (
-                            <Select.Item
-                              className={`flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer ${
-                                board.activelySupported
-                                  ? "text-gray-500"
-                                  : "text-gray-400"
-                              }`}
-                              value={`${board.hwModel}`}
-                            >
-                              {board.activelySupported ? null : (
-                                <DefaultTooltip text="This board is no longer actively supported by the Meshtastic project. Consider choosing an alternative board.">
-                                  <ExclamationTriangleIcon className="my-auto text-yellow-500" />
-                                </DefaultTooltip>
-                              )}
-                              <Select.ItemText>
-                                {board.displayName}
-                              </Select.ItemText>
-                              <Select.ItemIndicator className="ml-auto my-auto text-gray-700">
-                                <CheckIcon />
-                              </Select.ItemIndicator>
-                            </Select.Item>
-                          ))}
-                        </Select.Group>
+                        {boards.map((board) => (
+                          <Select.Item
+                            className={`flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer ${
+                              board.activelySupported
+                                ? "text-gray-500"
+                                : "text-gray-400"
+                            }`}
+                            value={`${board.hwModel}`}
+                          >
+                            {board.activelySupported ? null : (
+                              <DefaultTooltip text="This board is no longer actively supported by the Meshtastic project. Consider choosing an alternative board.">
+                                <ExclamationTriangleIcon className="my-auto text-yellow-500" />
+                              </DefaultTooltip>
+                            )}
+                            <Select.ItemText>
+                              {board.displayName}
+                            </Select.ItemText>
+                            <Select.ItemIndicator className="ml-auto my-auto text-gray-700">
+                              <CheckIcon />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.Group>
 
-                        {index !== Object.keys(groupedBoards).length - 1 ? (
-                          <Select.Separator className="mx-1 my-3 h-px bg-gray-300" />
-                        ) : null}
-                      </>
-                    );
-                  })}
+                      {index !== Object.keys(groupedBoards).length - 1 ? (
+                        <Select.Separator className="mx-1 my-3 h-px bg-gray-300" />
+                      ) : null}
+                    </>
+                  ))}
               </Select.Viewport>
 
               <Select.ScrollDownButton className="mx-auto">
@@ -323,19 +320,19 @@ const BoardOption = ({
         <div>
           {requestState === "pending" ? (
             <DefaultTooltip text="Flashing device...">
-              {selectedBoard?.architecture.includes("esp") ? (
+              {/* {selectedBoard?.architecture.includes("esp") ? (
                 <div className="flex flex-col h-full">
                   <ProgressBar
                     className="my-auto w-24"
                     progressPercentage={progress}
                   />
                 </div>
-              ) : (
-                <Loader
-                  className="animate-spin text-gray-400"
-                  strokeWidth={1.5}
-                />
-              )}
+              ) : ( */}
+              <Loader
+                className="animate-spin text-gray-400"
+                strokeWidth={1.5}
+              />
+              {/* )} */}
             </DefaultTooltip>
           ) : requestState === "success" ? (
             <DefaultTooltip text="Device flashed successfully">

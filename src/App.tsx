@@ -6,7 +6,6 @@ import { ArrowUpFromLine, Loader, Plus } from "lucide-react";
 import { info, error } from "@tauri-apps/plugin-log";
 
 import {
-  Board,
   ListBoardsResponse,
   ListFirmwareResponse,
   SerialPortInfo,
@@ -197,7 +196,7 @@ const App = () => {
                 }}
               >
                 <Plus className="text-gray-400" strokeWidth={1.5} />
-                <p className="text-gray-700">Add Board</p>
+                <p className="text-gray-500">Add Board</p>
               </button>
             </div>
           ) : (

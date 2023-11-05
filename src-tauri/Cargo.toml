@@ -16,7 +16,7 @@ tauri-build = { version = "1.4", features = [] }
 tauri = { version = "2.0.0-alpha", features = [] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.107"
-espflash = { version = "2.0.1", default-features = false }
+espflash = { git = "https://github.com/ajmcquilkin/espflash.git", default-features = false, rev = "8b2124453043d77a6ff82b0da11fdc02e6124c00" }
 tokio = "1.32.0"
 reqwest = { version = "0.11.20", features = ["json"] }
 zip = "0.6.6"

@@ -149,27 +149,42 @@ impl espflash::flasher::ProgressCallbacks for FlashProgress {
     }
 
     fn finish(&mut self) {
-        log::info!("Successfully flashed firmware");
+        log::info!("Successfully flashed firmware chunk");
     }
 }
 
 pub async fn flash_board(
     app_handle: tauri::AppHandle,
-    temp_file_path: PathBuf,
+    temp_firmware_file_path: PathBuf,
+    temp_ble_ota_file_path: PathBuf,  // ESP32 variants only
+    temp_littlefs_file_path: PathBuf, // ESP32 variants only
     firmware_file_name: String,
     upload_port: String,
     board: Board,
 ) -> Result<(), String> {
     if board.architecture.contains("esp") {
+        log::info!(
+            "ESP32 board detected, will use firmware file: {} -> {}",
+            firmware_file_name,
+            upload_port
+        );
+
         flash_esp32(
             app_handle,
-            firmware_file_name,
-            temp_file_path.clone(),
+            temp_firmware_file_path.clone(),
+            temp_ble_ota_file_path,
+            temp_littlefs_file_path,
             upload_port,
         )
         .await?;
     } else if board.architecture.contains("nrf") {
-        flash_nrf(firmware_file_name, temp_file_path, upload_port).await?;
+        log::info!(
+            "NRF board detected, will use firmware file: {} -> {}",
+            firmware_file_name,
+            upload_port
+        );
+
+        flash_nrf(firmware_file_name, temp_firmware_file_path, upload_port).await?;
     // } else if board.architecture.contains("pico") {
     //     flash_pico(firmware_file_name, temp_file_path, upload_port).await?;
     } else {
@@ -216,11 +231,15 @@ pub fn get_port_by_name(port: &String) -> Result<serialport::SerialPortInfo, Str
 
 pub async fn flash_esp_binary(
     app_handle: tauri::AppHandle,
-    port: String,
-    binary_file_path: PathBuf,
+    upload_port: String,
     flash_offset: u32,
+    binary_file_path: PathBuf,
+    reboot: bool,
 ) -> Result<(), String> {
-    let mut data = match tokio::fs::read(&binary_file_path).await {
+    let serial_interface = init_esp32_serial_port(&upload_port).await?;
+    let usb_port_info = get_serial_port_info(&upload_port).await?;
+
+    let mut binary_data_buffer = match tokio::fs::read(&binary_file_path).await {
         Ok(data) => data,
         Err(e) => {
             log::error!(
@@ -237,20 +256,97 @@ pub async fn flash_esp_binary(
         }
     };
 
-    let dtr = Some(1);
-    let rts = Some(0);
+    log::info!("Connecting to port {}...", upload_port);
 
-    // let port_info = get_serial_port_info(port.as_str()).unwrap();
-    let serial_port_info = get_port_by_name(&port)?;
-    let port_info = match &serial_port_info.port_type {
-        serialport::SerialPortType::UsbPort(info) => info.clone(),
-        _ => {
-            log::error!("Specified port is not a valid USB / Serial port");
-            return Err("Specified port is not a valid USB / Serial port".to_string());
+    let mut flasher = match espflash::flasher::Flasher::connect(
+        serial_interface,
+        usb_port_info,
+        Some(115_200),
+        true,
+    ) {
+        Ok(flasher) => flasher,
+        Err(e) => {
+            log::error!("Error while connecting to port {}: {}", upload_port, e);
+            return Err(format!(
+                "Error while connecting to port {}: {}",
+                upload_port, e
+            ));
         }
     };
 
-    let serial = match espflash::interface::Interface::new(&serial_port_info, dtr, rts) {
+    log::info!("Starting flashing process...");
+
+    let chunk_size = 1024 * 1024; // 1MB chunk size
+    let mut current_flash_offset = flash_offset;
+
+    log::debug!("Flashing buffer with length {}", binary_data_buffer.len());
+
+    while !binary_data_buffer.is_empty() {
+        let (data_chunk, remaining_data) = if binary_data_buffer.len() > chunk_size {
+            binary_data_buffer.split_at(chunk_size)
+        } else {
+            (binary_data_buffer.as_ref(), &[][..])
+        };
+
+        log::debug!(
+            "Flashing {} byte chunk at address {}, {} bytes remaining in buffer",
+            data_chunk.len(),
+            current_flash_offset,
+            remaining_data.len()
+        );
+
+        let mut progress = FlashProgress {
+            total: 0,
+            current: 0,
+            app_handle: app_handle.clone(),
+            board_id: BoardId(upload_port.clone()),
+        };
+
+        let is_data_remaining = remaining_data.len() > 0;
+
+        log::info!(
+            "Data remaining: {}, Reboot on complete: {}",
+            is_data_remaining,
+            reboot
+        );
+
+        match flasher.write_bin_to_flash(
+            current_flash_offset,
+            data_chunk,
+            Some(&mut progress),
+            !is_data_remaining && reboot,
+        ) {
+            Ok(_) => (),
+            Err(e) => {
+                log::error!("Error while writing data buffer to board: {}", e);
+                return Err(format!("Error while writing data buffer to board: {}", e));
+            }
+        };
+
+        log::debug!(
+            "Successfully flashed {} bytes with {} bytes remaining in buffer",
+            data_chunk.len(),
+            remaining_data.len()
+        );
+
+        current_flash_offset += data_chunk.len() as u32;
+        binary_data_buffer = remaining_data.to_vec();
+    }
+
+    log::info!("Finished writing binary data to board");
+
+    Ok(())
+}
+
+async fn init_esp32_serial_port(
+    upload_port: &String,
+) -> Result<espflash::interface::Interface, String> {
+    let dtr = Some(1);
+    let rts = Some(0);
+
+    let serial_port_info = get_port_by_name(upload_port)?;
+
+    let serial_interface = match espflash::interface::Interface::new(&serial_port_info, dtr, rts) {
         Ok(serial) => serial,
         Err(e) => {
             log::error!(
@@ -268,70 +364,62 @@ pub async fn flash_esp_binary(
         }
     };
 
-    log::info!("Connecting to port {}...", port);
+    Ok(serial_interface)
+}
 
-    let mut flasher =
-        match espflash::flasher::Flasher::connect(serial, port_info, Some(115_200), true) {
-            Ok(flasher) => flasher,
-            Err(e) => {
-                log::error!("Error while connecting to port {}: {}", port, e);
-                return Err(format!("Error while connecting to port {}: {}", port, e));
-            }
-        };
+async fn get_serial_port_info(upload_port: &String) -> Result<serialport::UsbPortInfo, String> {
+    let serial_port_info = get_port_by_name(upload_port)?;
 
-    log::info!("Starting flashing process...");
-
-    let chunk_size = 1024 * 1024; // 1MB chunk size
-    let mut offset = flash_offset;
-
-    let mut progress = FlashProgress {
-        total: 0,
-        current: 0,
-        app_handle,
-        board_id: BoardId(port.clone()),
+    let port_info = match serial_port_info.port_type.clone() {
+        serialport::SerialPortType::UsbPort(info) => info.clone(),
+        _ => {
+            log::error!("Specified port is not a valid USB / Serial port");
+            return Err("Specified port is not a valid USB / Serial port".to_string());
+        }
     };
 
-    while !data.is_empty() {
-        log::debug!("Flashing {} bytes of {} bytes", chunk_size, data.len());
-
-        let (chunk, rest) = if data.len() > chunk_size {
-            data.split_at(chunk_size)
-        } else {
-            (data.as_ref(), &[][..])
-        };
-
-        match flasher.write_bin_to_flash(offset, chunk, Some(&mut progress)) {
-            Ok(_) => (),
-            Err(e) => {
-                log::error!("Error while flashing firmware: {}", e);
-                return Err(format!("Error while flashing firmware: {}", e));
-            }
-        };
-
-        log::debug!("Successfully flashed {} bytes", chunk.len());
-
-        offset += chunk.len() as u32;
-        data = rest.to_vec();
-    }
-
-    log::info!("Finished uploading data to board");
-
-    Ok(())
+    Ok(port_info)
 }
 
 async fn flash_esp32(
     app_handle: tauri::AppHandle,
-    firmware_file_name: String,
-    firmware_file_path: PathBuf,
+    temp_firmware_file_path: PathBuf,
+    temp_ble_ota_file_path: PathBuf,
+    temp_littlefs_file_path: PathBuf,
     upload_port: String,
 ) -> Result<(), String> {
-    log::info!(
-        "ESP32 board detected, will use file: {} -> {}",
-        firmware_file_name,
-        upload_port
-    );
+    flash_esp_binary(
+        app_handle.clone(),
+        upload_port.clone(),
+        0x0000_0000,
+        temp_firmware_file_path,
+        false,
+    )
+    .await?;
 
-    flash_esp_binary(app_handle, upload_port, firmware_file_path, 0x010000).await?;
+    log::info!("Successfully flashed firmware binary at 0x0000_0000");
+
+    flash_esp_binary(
+        app_handle.clone(),
+        upload_port.clone(),
+        0x0026_0000,
+        temp_ble_ota_file_path,
+        false,
+    )
+    .await?;
+
+    log::info!("Successfully flashed BLE OTA binary at 0x0026_0000");
+
+    flash_esp_binary(
+        app_handle,
+        upload_port,
+        0x0030_0000,
+        temp_littlefs_file_path,
+        true,
+    )
+    .await?;
+
+    log::info!("Successfully flashed LittleFS binary at 0x0030_0000");
 
     Ok(())
 }
@@ -341,12 +429,6 @@ async fn flash_nrf(
     firmware_file_path: PathBuf,
     upload_dir: String,
 ) -> Result<(), String> {
-    log::info!(
-        "Non-ESP32 board detected, will use file: {} -> {}",
-        firmware_file_name,
-        upload_dir
-    );
-
     // Open temporary firmware file
 
     let firmware_file = match File::open(firmware_file_path.clone()).await {

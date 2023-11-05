@@ -65,26 +65,31 @@ pub fn get_firmware_file_name(
         return Err(format!("Unsupported architecture: {}", board.architecture));
     };
 
+    log::info!("Built firmware file name: {}", firmware_file_name);
+
     Ok(firmware_file_name)
 }
 
-pub async fn extract_binary_from_archive(
-    firmware_file_name: &String,
+pub async fn create_archive_from_bytes(
     firmware_zip_bundle_bytes: bytes::Bytes,
-) -> Result<Vec<u8>, String> {
+) -> Result<ZipArchive<Cursor<bytes::Bytes>>, String> {
     let reader = Cursor::new(firmware_zip_bundle_bytes);
 
-    let mut archive = match ZipArchive::new(reader) {
+    let archive = match ZipArchive::new(reader) {
         Ok(archive) => archive,
         Err(e) => {
             log::error!("Error while parsing firmware archive: {}", e.to_string());
-
             return Err(format!("Error while parsing firmware archive: {}", e));
         }
     };
 
-    log::info!("Built firmware file name: {}", firmware_file_name);
+    Ok(archive)
+}
 
+pub async fn extract_binary_from_archive(
+    archive: &mut ZipArchive<Cursor<bytes::Bytes>>,
+    firmware_file_name: &String,
+) -> Result<Vec<u8>, String> {
     // Need to keep `file` within scope since `ZipFile` isn't `Send`
     // This means it can't be awaited across
     let contents: Vec<u8> = {
