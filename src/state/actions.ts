@@ -1,4 +1,4 @@
-import { BoardOptionData } from "../components/BoardOption";
+import { BoardOptionData } from "../types/types";
 
 export type SetBoardHwModelAction = {
   type: "set_board_hw_model";

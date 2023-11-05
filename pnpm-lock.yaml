@@ -1,5 +1,9 @@
 lockfileVersion: '6.0'
 
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
 dependencies:
   '@radix-ui/react-dialog':
     specifier: ^1.0.4
@@ -48,10 +52,19 @@ dependencies:
     version: 2.0.0-alpha.1
   '@tauri-apps/plugin-store':
     specifier: github:tauri-apps/tauri-plugin-store#v2
-    version: github.com/tauri-apps/tauri-plugin-store/9f02a88a501b5f26ffb8fd45dca451e44fb54f79
+    version: github.com/tauri-apps/tauri-plugin-store/119df69002ba130db3ab693c33b8677a0afe5659
   '@tauri-apps/plugin-window':
     specifier: 2.0.0-alpha.1
     version: 2.0.0-alpha.1
+  lodash.groupby:
+    specifier: ^4.6.0
+    version: 4.6.0
+  lodash.mapvalues:
+    specifier: ^4.6.0
+    version: 4.6.0
+  lodash.orderby:
+    specifier: ^4.6.0
+    version: 4.6.0
   lucide-react:
     specifier: ^0.279.0
     version: 0.279.0(react@18.2.0)
@@ -78,6 +91,15 @@ devDependencies:
   '@types/jest':
     specifier: ^29.2.0
     version: 29.2.0
+  '@types/lodash.groupby':
+    specifier: ^4.6.8
+    version: 4.6.8
+  '@types/lodash.mapvalues':
+    specifier: ^4.6.8
+    version: 4.6.8
+  '@types/lodash.orderby':
+    specifier: ^4.6.8
+    version: 4.6.8
   '@types/react':
     specifier: ^18.2.15
     version: 18.2.15
@@ -1797,6 +1819,11 @@ packages:
       '@sinonjs/commons': 3.0.0
     dev: true
 
+  /@tauri-apps/api@2.0.0-alpha.11:
+    resolution: {integrity: sha512-aw7jic+MQAe/LH4fYhbd3bwx3YjXhDIwqKJIn5QO4yKmGdVURIhZSFcyeKkSe4P6Itdto0Pcz99vLfkgBwdQKw==}
+    engines: {node: '>= 18', npm: '>= 6.6.0', yarn: '>= 1.19.1'}
+    dev: false
+
   /@tauri-apps/api@2.0.0-alpha.6:
     resolution: {integrity: sha512-ZMOc3eu9amwvkC6M69h3hWt4/EsFaAXmtkiw4xd2LN59/lTb4ZQiVfq2QKlRcu1rj3n/Tcr7U30ZopvHwXBGIg==}
     engines: {node: '>= 14.6.0', npm: '>= 6.6.0', yarn: '>= 1.19.1'}
@@ -2014,6 +2041,28 @@ packages:
 
   /@types/json5@0.0.29:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
+    dev: true
+
+  /@types/lodash.groupby@4.6.8:
+    resolution: {integrity: sha512-+VbBhRhzo6g6q5RdVQXlU1vwbYVodEkS9ZCVuqHtZvhlSu1muQLNYYR1yhyYwAcSz7gMDOHlWPnPvAoQqV4rlg==}
+    dependencies:
+      '@types/lodash': 4.14.200
+    dev: true
+
+  /@types/lodash.mapvalues@4.6.8:
+    resolution: {integrity: sha512-pjyc26C5Ku3hBaqTZnO+eYR7FQ8zyoYTmscqFGsSZSfyeGWVu0K5hvKpytG7CRyaAcks83Z7lHzM5wa3Lk/2eQ==}
+    dependencies:
+      '@types/lodash': 4.14.200
+    dev: true
+
+  /@types/lodash.orderby@4.6.8:
+    resolution: {integrity: sha512-gvkdV88VOIC381U0kwofM+s5N5ZYzHwqMjaJkBDGFo8SA7UcCsGwtsU34Rat6opejf7uV6sQEniGwCjZnPW2Qw==}
+    dependencies:
+      '@types/lodash': 4.14.200
+    dev: true
+
+  /@types/lodash@4.14.200:
+    resolution: {integrity: sha512-YI/M/4HRImtNf3pJgbF+W6FrXovqj+T+/HpENLTooK9PnkacBsDpeP3IpHab40CClUfhNmdM2WTNP2sa2dni5Q==}
     dev: true
 
   /@types/node@20.6.2:
@@ -4414,6 +4463,14 @@ packages:
       p-locate: 5.0.0
     dev: true
 
+  /lodash.groupby@4.6.0:
+    resolution: {integrity: sha512-5dcWxm23+VAoz+awKmBaiBvzox8+RqMgFhi7UvX9DHZr2HdxHXM/Wrf8cfKpsW37RNrvtPn6hSwNqurSILbmJw==}
+    dev: false
+
+  /lodash.mapvalues@4.6.0:
+    resolution: {integrity: sha512-JPFqXFeZQ7BfS00H58kClY7SPVeHertPE0lNuCyZ26/XlN8TvakYD7b9bGyNmXbT/D3BbtPAAmq90gPWqLkxlQ==}
+    dev: false
+
   /lodash.memoize@4.1.2:
     resolution: {integrity: sha512-t7j+NzmgnQzTAYXcsHYLgimltOV1MXHtlOWf6GjL9Kj8GK5FInw5JotxvbOs+IvV1/Dzo04/fCGfLVs7aXb4Ag==}
     dev: true
@@ -4421,6 +4478,10 @@ packages:
   /lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
     dev: true
+
+  /lodash.orderby@4.6.0:
+    resolution: {integrity: sha512-T0rZxKmghOOf5YPnn8EY5iLYeWCpZq8G41FfqoVHH5QDTAFaghJRmAdLiadEDq+ztgM2q5PjA+Z1fOwGrLgmtg==}
+    dev: false
 
   /loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
@@ -5749,10 +5810,10 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  github.com/tauri-apps/tauri-plugin-store/9f02a88a501b5f26ffb8fd45dca451e44fb54f79:
-    resolution: {tarball: https://codeload.github.com/tauri-apps/tauri-plugin-store/tar.gz/9f02a88a501b5f26ffb8fd45dca451e44fb54f79}
+  github.com/tauri-apps/tauri-plugin-store/119df69002ba130db3ab693c33b8677a0afe5659:
+    resolution: {tarball: https://codeload.github.com/tauri-apps/tauri-plugin-store/tar.gz/119df69002ba130db3ab693c33b8677a0afe5659}
     name: '@tauri-apps/plugin-store'
-    version: 2.0.0-alpha.1
+    version: 2.0.0-alpha.3
     dependencies:
-      '@tauri-apps/api': 2.0.0-alpha.8
+      '@tauri-apps/api': 2.0.0-alpha.11
     dev: false

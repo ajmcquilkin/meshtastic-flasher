@@ -1,5 +1,5 @@
 import { useReducer } from "react";
-import { BoardOptionData } from "../components/BoardOption";
+import { BoardOptionData } from "../types/types";
 import {
   AddBoardAction,
   DeleteBoardAction,
@@ -38,7 +38,7 @@ export const reducer = (
         if (i === index) {
           return {
             ...board,
-            hwModel,
+            selectedHwModel: hwModel,
           };
         }
 
@@ -59,7 +59,7 @@ export const reducer = (
         if (i === index) {
           return {
             ...board,
-            port,
+            selectedPort: port,
           };
         }
         return board;
@@ -79,7 +79,7 @@ export const reducer = (
         if (i === index) {
           return {
             ...board,
-            firmwareVersion: version,
+            selectedFirmwareVersion: version,
           };
         }
         return board;

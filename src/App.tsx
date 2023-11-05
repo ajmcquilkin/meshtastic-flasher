@@ -6,11 +6,12 @@ import { ArrowUpFromLine, Loader, Plus } from "lucide-react";
 import { info, error } from "@tauri-apps/plugin-log";
 
 import {
+  Board,
   ListBoardsResponse,
   ListFirmwareResponse,
   SerialPortInfo,
-} from "./types";
-import BoardOption, { BoardOptionData } from "./components/BoardOption";
+} from "./types/backend";
+import BoardOption from "./components/BoardOption";
 import Titlebar from "./components/Titlebar";
 import DefaultTooltip from "./components/generic/DefaultTooltip";
 import { useAppReducer } from "./state/reducer";
@@ -23,6 +24,7 @@ import {
   createSetBoardVersionAction,
 } from "./state/actions";
 import WelcomeScreen from "./components/WelcomeScreenDialog";
+import { BoardOptionData } from "./types/types";
 
 const App = () => {
   const [listFirmwareReponse, setListFirmwareResponse] =
@@ -90,27 +92,29 @@ const App = () => {
     getAvailableSerialPorts();
   }, []);
 
-  const flashDevice = async (board: BoardOptionData) => {
+  const flashDevice = async (port: string, board: BoardOptionData) => {
     try {
-      setFlashStates((prev) => ({ ...prev, [board.port]: "pending" }));
+      setFlashStates((prev) => ({ ...prev, [port]: "pending" }));
 
       await invoke("flash_device", {
-        hwModel: board.hwModel,
-        uploadPort: board.port,
-        firmwareVersionId: board.firmwareVersion,
+        hwModel: board.selectedHwModel,
+        uploadPort: board.selectedPort,
+        firmwareVersionId: board.selectedFirmwareVersion,
       });
 
-      setFlashStates((prev) => ({ ...prev, [board.port]: "success" }));
+      setFlashStates((prev) => ({ ...prev, [port]: "success" }));
     } catch (err) {
       error(err as string);
-      setFlashStates((prev) => ({ ...prev, [board.port]: "error" }));
+      setFlashStates((prev) => ({ ...prev, [port]: "error" }));
     }
   };
 
   const handleFlashDevices = async () => {
     info('Clicked "Flash devices"');
 
-    Promise.all(state.boards.map((b) => flashDevice(b)))
+    Promise.all(
+      state.boards.map((b) => b.selectedPort && flashDevice(b.selectedPort, b))
+    )
       .then(() => info("Flashing completed"))
       .catch((e) => error("Flashing failed", e));
   };
@@ -146,19 +150,20 @@ const App = () => {
                 {state.boards.map((boardOption, index) => (
                   <BoardOption
                     key={index}
-                    board={boardOption}
-                    activelySupported={
+                    boardOptionData={boardOption}
+                    selectedBoard={
                       listBoardsResponse.find(
-                        (b) => b.hwModel === boardOption.hwModel
-                      )?.activelySupported ?? false
+                        (b) => b.hwModel === boardOption.selectedHwModel
+                      ) ?? null
                     }
-                    requestState={flashStates[boardOption.port] ?? null}
+                    requestState={
+                      boardOption?.selectedPort
+                        ? flashStates[boardOption.selectedPort] ?? null
+                        : null
+                    }
                     availableBoards={listBoardsResponse}
                     availableFirmwareVersions={listFirmwareReponse.releases}
                     availableSerialPorts={availableSerialPorts}
-                    setFirmwareVersion={(version) => {
-                      dispatch(createSetBoardVersionAction(index, version));
-                    }}
                     deleteSelf={() => {
                       dispatch(createDeleteBoardAction(index));
                     }}
@@ -168,8 +173,11 @@ const App = () => {
                     setHwModel={(hwModel) => {
                       dispatch(createSetBoardHwModelAction(index, hwModel));
                     }}
-                    setPort={(port) => {
+                    setSerialPort={(port) => {
                       dispatch(createSetBoardPortAction(index, port));
+                    }}
+                    setFirmwareVersion={(version) => {
+                      dispatch(createSetBoardVersionAction(index, version));
                     }}
                   />
                 ))}
@@ -180,10 +188,10 @@ const App = () => {
                 onClick={() => {
                   dispatch(
                     createAddBoardAction({
-                      firmwareVersion:
-                        listFirmwareReponse.releases.stable[0].id,
-                      hwModel: listBoardsResponse[0].hwModel,
-                      port: "",
+                      selectedHwModel: listBoardsResponse?.[0].hwModel ?? null,
+                      selectedPort: null,
+                      selectedFirmwareVersion:
+                        listFirmwareReponse.releases.stable?.[0].id ?? null,
                     })
                   );
                 }}

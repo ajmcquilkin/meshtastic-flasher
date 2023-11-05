@@ -3,40 +3,30 @@ import {
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  ExclamationTriangleIcon,
 } from "@radix-ui/react-icons";
-import {
-  ShieldAlert,
-  ShieldCheck,
-  Copy,
-  Trash2,
-  Check,
-  X,
-  Loader,
-} from "lucide-react";
+import { Copy, Trash2, Check, X, Loader, GripVertical } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { listen } from "@tauri-apps/api/event";
+import groupBy from "lodash.groupby";
+import orderBy from "lodash.orderby";
 
+import { BoardOptionData } from "../types/types";
 import {
   Board,
   FirmwareRelease,
   ListBoardsResponse,
   ListFirmwareResponse,
   SerialPortInfo,
-} from "../types";
+} from "../types/backend";
 import DefaultTooltip from "./generic/DefaultTooltip";
 import { useEffect, useState } from "react";
 import ProgressBar from "./ProgressBar";
 import { info } from "@tauri-apps/plugin-log";
 
-export interface BoardOptionData {
-  hwModel: Board["hwModel"];
-  port: string;
-  firmwareVersion: FirmwareRelease["id"];
-}
-
 export interface BoardOptionProps {
-  board: BoardOptionData;
-  activelySupported: boolean;
+  boardOptionData: BoardOptionData;
+  selectedBoard: Board | null;
   requestState: "pending" | "success" | "error" | null;
 
   availableBoards: ListBoardsResponse;
@@ -44,7 +34,7 @@ export interface BoardOptionProps {
   availableSerialPorts: SerialPortInfo[];
 
   setHwModel: (hwModel: Board["hwModel"]) => void;
-  setPort: (port: string) => void;
+  setSerialPort: (port: string) => void;
   setFirmwareVersion: (version: FirmwareRelease["id"]) => void;
 
   duplicateSelf: () => void;
@@ -52,16 +42,16 @@ export interface BoardOptionProps {
 }
 
 const BoardOption = ({
-  board,
-  activelySupported,
+  boardOptionData,
   requestState,
+  selectedBoard,
 
   availableBoards,
-  availableFirmwareVersions,
   availableSerialPorts,
+  availableFirmwareVersions,
 
   setHwModel,
-  setPort,
+  setSerialPort,
   setFirmwareVersion,
 
   duplicateSelf,
@@ -69,32 +59,14 @@ const BoardOption = ({
 }: BoardOptionProps) => {
   const [progress, setProgress] = useState<number>(0);
 
-  const boards = availableBoards.reduce(
-    (acc, board) => {
-      if (board.architecture.includes("esp")) {
-        return {
-          ...acc,
-          esp: [...acc.esp, board],
-        };
-      }
-
-      if (board.architecture.includes("nrf")) {
-        return {
-          ...acc,
-          nrf: [...acc.nrf, board],
-        };
-      }
-
-      return {
-        ...acc,
-        other: [...acc.other, board],
-      };
-    },
-    {
-      esp: [] as Board[],
-      nrf: [] as Board[],
-      other: [] as Board[],
-    }
+  // Sort first by supported then by alphabetical
+  const groupedBoards = groupBy(
+    orderBy(
+      availableBoards,
+      [(board) => board.activelySupported, (board) => board.displayName],
+      ["desc", "asc"]
+    ),
+    (board) => board.architecture
   );
 
   // Workaround to allow for async cleanup functions
@@ -107,7 +79,7 @@ const BoardOption = ({
         boardId: string;
         current: number;
         total: number;
-      }>(`flash-status-update-${board.port}`, (event) => {
+      }>(`flash-status-update-${boardOptionData.selectedPort}`, (event) => {
         const { boardId, current, total } = event.payload;
         info(`Received event from "${boardId}": ${JSON.stringify(event)}`);
         setProgress((current / total) * 100);
@@ -133,30 +105,22 @@ const BoardOption = ({
       directory: true,
     });
 
-    setPort(result as string); // Not allowing multiple dirs, can ignore string[]
+    setSerialPort(result as string); // Not allowing multiple dirs, can ignore string[]
   };
 
   return (
     <div className="flex flex-row justify-between px-4 py-3 border border-gray-100 shadow-md rounded-lg">
       <div className="flex flex-row justify-start gap-4">
-        <div>
-          {activelySupported ? (
-            <DefaultTooltip text="This board is actively supported!">
-              <ShieldCheck className="text-gray-300" strokeWidth={1.5} />
-            </DefaultTooltip>
-          ) : (
-            <DefaultTooltip text="This board is no longer actively supported by the Meshtastic project. Consider choosing an alternative board.">
-              <ShieldAlert className="text-red-400" strokeWidth={1.5} />
-            </DefaultTooltip>
-          )}
-        </div>
+        <DefaultTooltip text="Drag to reorder not yet implemented">
+          <GripVertical className="cursor-pointer text-gray-300" />
+        </DefaultTooltip>
 
         <Select.Root
-          value={`${board.hwModel}`}
+          value={`${boardOptionData.selectedHwModel}`}
           onValueChange={(board) => setHwModel(parseInt(board))}
         >
           <Select.Trigger
-            className="flex flex-row gap-2 text-gray-700"
+            className="flex flex-row gap-2 text-gray-500"
             aria-label="Devices"
           >
             <Select.Value placeholder="Device" />
@@ -172,69 +136,47 @@ const BoardOption = ({
               </Select.ScrollUpButton>
 
               <Select.Viewport className="">
-                <Select.Group>
-                  <Select.Label className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">
-                    ESP
-                  </Select.Label>
+                {Object.entries(groupedBoards)
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .map(([architecture, boards], index) => {
+                    console.log(architecture, boards);
+                    return (
+                      <>
+                        <Select.Group>
+                          <Select.Label className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">
+                            {architecture.toLocaleUpperCase()}
+                          </Select.Label>
 
-                  {boards.esp.map((board) => (
-                    <Select.Item
-                      className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer"
-                      value={`${board.hwModel}`}
-                    >
-                      <Select.ItemText className="text-gray-500">
-                        {board.displayName}
-                      </Select.ItemText>
-                      <Select.ItemIndicator className="ml-auto my-auto">
-                        <CheckIcon />
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                  ))}
-                </Select.Group>
+                          {boards.map((board) => (
+                            <Select.Item
+                              className={`flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer ${
+                                board.activelySupported
+                                  ? "text-gray-500"
+                                  : "text-gray-400"
+                              }`}
+                              value={`${board.hwModel}`}
+                            >
+                              {board.activelySupported ? null : (
+                                <DefaultTooltip text="This board is no longer actively supported by the Meshtastic project. Consider choosing an alternative board.">
+                                  <ExclamationTriangleIcon className="my-auto text-yellow-500" />
+                                </DefaultTooltip>
+                              )}
+                              <Select.ItemText>
+                                {board.displayName}
+                              </Select.ItemText>
+                              <Select.ItemIndicator className="ml-auto my-auto text-gray-700">
+                                <CheckIcon />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Group>
 
-                <Select.Separator className="mx-1 my-3 h-px bg-gray-300" />
-
-                <Select.Group>
-                  <Select.Label className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">
-                    NRF
-                  </Select.Label>
-
-                  {boards.nrf.map((board) => (
-                    <Select.Item
-                      className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer"
-                      value={`${board.hwModel}`}
-                    >
-                      <Select.ItemText className="text-gray-500">
-                        {board.displayName}
-                      </Select.ItemText>
-                      <Select.ItemIndicator className="ml-auto my-auto">
-                        <CheckIcon />
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                  ))}
-                </Select.Group>
-
-                <Select.Separator className="mx-1 my-3 h-px bg-gray-300" />
-
-                <Select.Group>
-                  <Select.Label className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">
-                    Other
-                  </Select.Label>
-
-                  {boards.other.map((board) => (
-                    <Select.Item
-                      className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer"
-                      value={`${board.hwModel}`}
-                    >
-                      <Select.ItemText className="text-gray-500">
-                        {board.displayName}
-                      </Select.ItemText>
-                      <Select.ItemIndicator className="ml-auto my-auto">
-                        <CheckIcon />
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                  ))}
-                </Select.Group>
+                        {index !== Object.keys(groupedBoards).length - 1 ? (
+                          <Select.Separator className="mx-1 my-3 h-px bg-gray-300" />
+                        ) : null}
+                      </>
+                    );
+                  })}
               </Select.Viewport>
 
               <Select.ScrollDownButton className="mx-auto">
@@ -244,15 +186,13 @@ const BoardOption = ({
           </Select.Portal>
         </Select.Root>
 
-        {availableBoards
-          .find((b) => b.hwModel === board.hwModel)
-          ?.architecture.includes("esp") ? (
+        {selectedBoard?.architecture.includes("esp") ? (
           <Select.Root
-            value={`${board.port}`}
-            onValueChange={(port) => setPort(port)}
+            value={`${boardOptionData.selectedPort}`}
+            onValueChange={(port) => setSerialPort(port)}
           >
             <Select.Trigger
-              className="flex flex-row gap-2 text-gray-700"
+              className="flex flex-row gap-2 text-gray-500"
               aria-label="Serial ports"
             >
               <Select.Value placeholder="Serial Port" />
@@ -298,17 +238,19 @@ const BoardOption = ({
         ) : (
           <button type="button" onClick={handlePortClick}>
             <DefaultTooltip text="Select Port">
-              <p className="text-gray-500">{board.port || "Select Port"}</p>
+              <p className="text-gray-500">
+                {boardOptionData.selectedPort || "Select Port"}
+              </p>
             </DefaultTooltip>
           </button>
         )}
 
         <Select.Root
-          value={`${board.firmwareVersion}`}
+          value={`${boardOptionData.selectedFirmwareVersion}`}
           onValueChange={(version) => setFirmwareVersion(version)}
         >
           <Select.Trigger
-            className="flex flex-row gap-2 text-gray-700"
+            className="flex flex-row gap-2 text-gray-500"
             aria-label="Firmware versions"
           >
             <Select.Value placeholder="Firmware Version" />
@@ -381,9 +323,7 @@ const BoardOption = ({
         <div>
           {requestState === "pending" ? (
             <DefaultTooltip text="Flashing device...">
-              {availableBoards
-                .find((b) => b.hwModel === board.hwModel)
-                ?.architecture.includes("esp") ? (
+              {selectedBoard?.architecture.includes("esp") ? (
                 <div className="flex flex-col h-full">
                   <ProgressBar
                     className="my-auto w-24"
