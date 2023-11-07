@@ -19,6 +19,7 @@ import {
   HeartIcon,
   InfoCircledIcon,
   ReloadIcon,
+  CommitIcon,
 } from "@radix-ui/react-icons";
 import { openLink } from "../helpers";
 
@@ -44,6 +45,16 @@ const WindowMenu = ({
 
   const handleRefreshSerialPorts = async () => {
     refreshSerialPorts();
+  };
+
+  const handleCopyVersionNumber = async () => {
+    try {
+      info(`Writing app version to clipboard: ${APP_VERSION}`);
+      await writeText(APP_VERSION);
+      info("Wrote app version to clipboard");
+    } catch (err) {
+      error(`Failed to write app version to clipboard: ${err}`);
+    }
   };
 
   const handleQuitApp = async () => {
@@ -127,14 +138,6 @@ const WindowMenu = ({
               <p className="text-sm text-gray-600">Refresh Serial Ports</p>
             </Menubar.Item>
 
-            <Menubar.Item
-              className="flex flex-row gap-3 cursor-pointer"
-              onSelect={handleShowWelcomeScreen}
-            >
-              <InfoCircledIcon className="my-auto text-gray-600" />
-              <p className="text-sm text-gray-600">Show welcome screen</p>
-            </Menubar.Item>
-
             <Menubar.Separator className="h-px bg-gray-300 my-1" />
 
             <Menubar.Item
@@ -160,6 +163,14 @@ const WindowMenu = ({
             sideOffset={5}
             alignOffset={-3}
           >
+            <Menubar.Item
+              className="flex flex-row gap-3 cursor-pointer"
+              onSelect={handleShowWelcomeScreen}
+            >
+              <InfoCircledIcon className="my-auto text-gray-600" />
+              <p className="text-sm text-gray-600">Show welcome screen</p>
+            </Menubar.Item>
+
             <Menubar.Item
               className="flex flex-row gap-3 cursor-pointer"
               onSelect={handleToggleFullscreen}
@@ -227,6 +238,16 @@ const WindowMenu = ({
             sideOffset={5}
             alignOffset={-3}
           >
+            <Menubar.Item
+              className="flex flex-row gap-3 cursor-pointer"
+              onSelect={handleCopyVersionNumber}
+            >
+              <CommitIcon className="my-auto text-gray-600" />
+              <p className="text-sm text-gray-600">Version {APP_VERSION}</p>
+            </Menubar.Item>
+
+            <Menubar.Separator className="h-px bg-gray-300 my-1" />
+
             <Menubar.Item
               className="flex flex-row gap-3 cursor-pointer"
               onSelect={handleCopyLogDir}
