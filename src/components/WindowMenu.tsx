@@ -16,7 +16,6 @@ import {
   ExitIcon,
   ExternalLinkIcon,
   GitHubLogoIcon,
-  GlobeIcon,
   HeartIcon,
   InfoCircledIcon,
   ReloadIcon,
