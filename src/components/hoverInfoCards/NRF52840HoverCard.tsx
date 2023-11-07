@@ -3,13 +3,14 @@ import { InfoCircledIcon } from "@radix-ui/react-icons";
 
 import DefaultTooltip from "../generic/DefaultTooltip";
 import Rak19007Render from "../../assets/rak-19007-render.webp";
+import Rak4631Render from "../../assets/rak-4631-render.webp";
 
 const NRF52840HoverCard = () => {
   return (
     <HoverCard.Root>
       <HoverCard.Trigger asChild>
         <div className="flex flex-row gap-2 cursor-pointer">
-          <p className="my-auto text-sm font-medium text-gray-600">nRF52840</p>
+          <p className="my-auto text-sm font-medium text-gray-500">nRF52840</p>
           <InfoCircledIcon className="my-auto text-gray-500" />
         </div>
       </HoverCard.Trigger>
@@ -18,11 +19,21 @@ const NRF52840HoverCard = () => {
         <HoverCard.Content className="p-4 default-overlay" sideOffset={5}>
           <div className="w-96">
             <div className="relative w-96 h-96">
-              <img src={Rak19007Render} alt="Render of RAK 19007" />
+              <img
+                className="absolute w-96 h-96 top-0 left-0"
+                src={Rak19007Render}
+                alt="Render of RAK 19007"
+              />
+
+              <img
+                className="absolute w-48 h-48 top-0 left-0"
+                src={Rak4631Render}
+                alt="Render of RAK 11310"
+              />
 
               <DefaultTooltip text="Reset Button (RST)" delayDuration={0}>
                 <div
-                  className="absolute top-[271px] left-[119px] -translate-x-1/2 -translate-y-1/2 w-8 h-8 hover:w-12 hover:h-12 bg-green-400/40 border-2 border-green-400/60 rounded-lg"
+                  className="absolute top-[271px] left-[119px] -translate-x-1/2 -translate-y-1/2 w-8 h-8 hover:w-12 hover:h-12 bg-purple-400/40 border-2 border-purple-400/60 rounded-lg"
                   style={{
                     transition:
                       "width 80ms ease-in-out, height 80ms ease-in-out",
@@ -37,7 +48,7 @@ const NRF52840HoverCard = () => {
                   nRF52840 Selected
                 </h2>
                 <p className="mt-auto mb-1 text-xs font-medium text-gray-400">
-                  RAK 19007 shown
+                  RAK 19007 shown with RAK 4631
                 </p>
               </div>
 
@@ -48,7 +59,7 @@ const NRF52840HoverCard = () => {
               <ol className="ml-8 list-decimal">
                 <li className="pl-1 text-base font-normal text-gray-600">
                   Quickly double-press the{" "}
-                  <mark className="px-1 py-0.5 text-gray-900 bg-green-400/40">
+                  <mark className="px-1 py-0.5 text-gray-900 bg-purple-400/40">
                     RST
                   </mark>{" "}
                   button
