@@ -6,12 +6,14 @@ export interface IDefaultTooltipProps extends Tooltip.TooltipContentProps {
   text: string;
   children: ReactNode;
   deactivated?: boolean;
+  delayDuration?: number;
 }
 
 const DefaultTooltip = ({
   text,
   children,
   deactivated,
+  delayDuration = 300,
   ...rest
 }: IDefaultTooltipProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,7 +23,7 @@ const DefaultTooltip = ({
       <Tooltip.Root
         open={isOpen}
         onOpenChange={(e) => setIsOpen(e && !deactivated)}
-        delayDuration={300}
+        delayDuration={delayDuration}
       >
         <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
         <Tooltip.Portal>

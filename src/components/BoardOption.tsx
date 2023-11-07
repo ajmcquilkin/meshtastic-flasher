@@ -1,3 +1,8 @@
+import { useEffect, useState } from "react";
+import { open } from "@tauri-apps/plugin-dialog";
+import { listen } from "@tauri-apps/api/event";
+import { info } from "@tauri-apps/plugin-log";
+
 import * as Select from "@radix-ui/react-select";
 import {
   CheckIcon,
@@ -6,8 +11,6 @@ import {
   ExclamationTriangleIcon,
 } from "@radix-ui/react-icons";
 import { Copy, Trash2, Check, X, Loader, GripVertical } from "lucide-react";
-import { open } from "@tauri-apps/plugin-dialog";
-import { listen } from "@tauri-apps/api/event";
 
 import {
   BoardArchitectureDictionary,
@@ -16,9 +19,8 @@ import {
 } from "../types/types";
 import { Board, FirmwareRelease, SerialPortInfo } from "../types/backend";
 import DefaultTooltip from "./generic/DefaultTooltip";
-import { useEffect, useState } from "react";
+import HoverInfoCardSwitcher from "./hoverInfoCards/HoverInfoCardSwitcher";
 // import ProgressBar from "./ProgressBar";
-import { info } from "@tauri-apps/plugin-log";
 
 export interface BoardOptionProps {
   boardOptionData: BoardOptionData;
@@ -183,6 +185,10 @@ const BoardOption = ({
             </Select.Content>
           </Select.Portal>
         </Select.Root>
+
+        {selectedBoard ? (
+          <HoverInfoCardSwitcher architecture={selectedBoard.architecture} />
+        ) : null}
 
         {selectedBoard?.architecture.includes("esp") ? (
           <Select.Root
