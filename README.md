@@ -4,9 +4,12 @@ An experimental desktop application for flashing Meshtastic firmware onto [suppo
 
 ## :computer: Current Progress
 
-![image](https://github.com/ajmcquilkin/meshtastic-flasher/assets/46639306/58ed9866-b7dc-47e6-9e0c-498498b40d96)
+![image](https://github.com/ajmcquilkin/meshtastic-flasher/assets/46639306/da307be7-901c-4043-aca9-22ecefe83625)
 
-![image](https://github.com/ajmcquilkin/meshtastic-flasher/assets/46639306/d4879071-b146-4075-8a97-7957c21e844d)
+![image](https://github.com/ajmcquilkin/meshtastic-flasher/assets/46639306/63441f5b-c4cf-410e-952b-e60566d82705)
+
+![image](https://github.com/ajmcquilkin/meshtastic-flasher/assets/46639306/c274c35e-a691-4560-8e7b-f0ee9ed5d700)
+
 
 ## :heart: Contributing
 
