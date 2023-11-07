@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react";
 import { appLogDir, join } from "@tauri-apps/api/path";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { open } from "@tauri-apps/plugin-shell";
 import { getCurrent } from "@tauri-apps/plugin-window";
+import { invoke } from "@tauri-apps/api/tauri";
+
 import * as Menubar from "@radix-ui/react-menubar";
 import { error, info } from "@tauri-apps/plugin-log";
 import {
@@ -11,10 +14,14 @@ import {
   EnterFullScreenIcon,
   ExitFullScreenIcon,
   ExitIcon,
+  ExternalLinkIcon,
+  GitHubLogoIcon,
+  GlobeIcon,
+  HeartIcon,
+  InfoCircledIcon,
   ReloadIcon,
 } from "@radix-ui/react-icons";
-import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { openLink } from "../helpers";
 
 export interface WindowMenuProps {
   showWelcomeScreen: () => void;
@@ -95,12 +102,8 @@ const WindowMenu = ({
     }
   };
 
-  const handleReportBug = async () => {
-    try {
-      await open("https://github.com/ajmcquilkin/meshtastic-flasher/issues");
-    } catch (err) {
-      error(`Failed to open bug report URL: ${err}`);
-    }
+  const handleOpenLink = async (link: string) => {
+    await openLink(link);
   };
 
   return (
@@ -109,6 +112,7 @@ const WindowMenu = ({
         <Menubar.Trigger className="text-sm text-gray-600">
           File
         </Menubar.Trigger>
+
         <Menubar.Portal>
           <Menubar.Content
             className="flex flex-col gap-2 px-4 py-3 bg-white border border-gray-100 rounded-lg shadow-lg"
@@ -123,6 +127,17 @@ const WindowMenu = ({
               <ReloadIcon className="my-auto text-gray-600" />
               <p className="text-sm text-gray-600">Refresh Serial Ports</p>
             </Menubar.Item>
+
+            <Menubar.Item
+              className="flex flex-row gap-3 cursor-pointer"
+              onSelect={handleShowWelcomeScreen}
+            >
+              <InfoCircledIcon className="my-auto text-gray-600" />
+              <p className="text-sm text-gray-600">Show welcome screen</p>
+            </Menubar.Item>
+
+            <Menubar.Separator className="h-px bg-gray-300 my-1" />
+
             <Menubar.Item
               className="flex flex-row gap-3 cursor-pointer"
               onSelect={handleQuitApp}
@@ -138,6 +153,7 @@ const WindowMenu = ({
         <Menubar.Trigger className="text-sm text-gray-600">
           View
         </Menubar.Trigger>
+
         <Menubar.Portal>
           <Menubar.Content
             className="flex flex-col gap-2 px-4 py-3 bg-white border border-gray-100 rounded-lg shadow-lg"
@@ -165,8 +181,9 @@ const WindowMenu = ({
 
       <Menubar.Menu>
         <Menubar.Trigger className="text-sm text-gray-600">
-          Help
+          Info
         </Menubar.Trigger>
+
         <Menubar.Portal>
           <Menubar.Content
             className="flex flex-col gap-2 px-4 py-3 bg-white border border-gray-100 rounded-lg shadow-lg"
@@ -176,14 +193,41 @@ const WindowMenu = ({
           >
             <Menubar.Item
               className="flex flex-row gap-3 cursor-pointer"
-              onSelect={handleShowWelcomeScreen}
+              onSelect={() =>
+                handleOpenLink("https://rakwireless.kckb.st/ab922280")
+              }
             >
-              <ExitIcon className="my-auto text-gray-600" />
-              <p className="text-sm text-gray-600">Show welcome screen</p>
+              <ExternalLinkIcon className="my-auto text-gray-600" />
+              <p className="text-sm text-gray-600">RAK Wireless Discount</p>
             </Menubar.Item>
 
             <Menubar.Separator className="h-px bg-gray-300 my-1" />
 
+            <Menubar.Item
+              className="flex flex-row gap-3 cursor-pointer"
+              onSelect={() =>
+                handleOpenLink("https://github.com/sponsors/ajmcquilkin")
+              }
+            >
+              <HeartIcon className="my-auto text-gray-600" />
+              <p className="text-sm text-gray-600">Support my Work</p>
+            </Menubar.Item>
+          </Menubar.Content>
+        </Menubar.Portal>
+      </Menubar.Menu>
+
+      <Menubar.Menu>
+        <Menubar.Trigger className="text-sm text-gray-600">
+          Help
+        </Menubar.Trigger>
+
+        <Menubar.Portal>
+          <Menubar.Content
+            className="flex flex-col gap-2 px-4 py-3 bg-white border border-gray-100 rounded-lg shadow-lg"
+            align="start"
+            sideOffset={5}
+            alignOffset={-3}
+          >
             <Menubar.Item
               className="flex flex-row gap-3 cursor-pointer"
               onSelect={handleCopyLogDir}
@@ -212,9 +256,13 @@ const WindowMenu = ({
 
             <Menubar.Item
               className="flex flex-row gap-3 cursor-pointer"
-              onSelect={handleReportBug}
+              onSelect={() =>
+                handleOpenLink(
+                  "https://github.com/ajmcquilkin/meshtastic-flasher/issues"
+                )
+              }
             >
-              <ExitIcon className="my-auto text-gray-600" />
+              <GitHubLogoIcon className="my-auto text-gray-600" />
               <p className="text-sm text-gray-600">Report a bug</p>
             </Menubar.Item>
           </Menubar.Content>

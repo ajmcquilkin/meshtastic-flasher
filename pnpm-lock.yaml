@@ -33,8 +33,8 @@ dependencies:
     specifier: ^1.0.3
     version: 1.0.3(@types/react-dom@18.2.7)(@types/react@18.2.15)(react-dom@18.2.0)(react@18.2.0)
   '@tauri-apps/api':
-    specifier: 2.0.0-alpha.8
-    version: 2.0.0-alpha.8
+    specifier: 2.0.0-alpha.7
+    version: 2.0.0-alpha.7
   '@tauri-apps/plugin-clipboard-manager':
     specifier: 2.0.0-alpha.1
     version: 2.0.0-alpha.1
@@ -51,8 +51,8 @@ dependencies:
     specifier: 2.0.0-alpha.1
     version: 2.0.0-alpha.1
   '@tauri-apps/plugin-store':
-    specifier: github:tauri-apps/tauri-plugin-store#v2
-    version: github.com/tauri-apps/tauri-plugin-store/119df69002ba130db3ab693c33b8677a0afe5659
+    specifier: 2.0.0-alpha.1
+    version: 2.0.0-alpha.1
   '@tauri-apps/plugin-window':
     specifier: 2.0.0-alpha.1
     version: 2.0.0-alpha.1
@@ -1813,13 +1813,13 @@ packages:
       '@sinonjs/commons': 3.0.0
     dev: true
 
-  /@tauri-apps/api@2.0.0-alpha.11:
-    resolution: {integrity: sha512-aw7jic+MQAe/LH4fYhbd3bwx3YjXhDIwqKJIn5QO4yKmGdVURIhZSFcyeKkSe4P6Itdto0Pcz99vLfkgBwdQKw==}
-    engines: {node: '>= 18', npm: '>= 6.6.0', yarn: '>= 1.19.1'}
-    dev: false
-
   /@tauri-apps/api@2.0.0-alpha.6:
     resolution: {integrity: sha512-ZMOc3eu9amwvkC6M69h3hWt4/EsFaAXmtkiw4xd2LN59/lTb4ZQiVfq2QKlRcu1rj3n/Tcr7U30ZopvHwXBGIg==}
+    engines: {node: '>= 14.6.0', npm: '>= 6.6.0', yarn: '>= 1.19.1'}
+    dev: false
+
+  /@tauri-apps/api@2.0.0-alpha.7:
+    resolution: {integrity: sha512-RfoDNmOXbCShDjGrshmyH05E1mUhnjCIyFq1RU22aaRerRDrr59FzKEiB1/aFaXjLa3BTRBCKtvBVf07wl75gA==}
     engines: {node: '>= 14.6.0', npm: '>= 6.6.0', yarn: '>= 1.19.1'}
     dev: false
 
@@ -1961,6 +1961,12 @@ packages:
 
   /@tauri-apps/plugin-shell@2.0.0-alpha.1:
     resolution: {integrity: sha512-vH4ODw/7pmMHackh1F+/uGmBXNGArVJ8FRO0xyL0xjPsMxbba4o90FJ7eiITENznBZRKn3JFaTedh8KhAZqU/g==}
+    dependencies:
+      '@tauri-apps/api': 2.0.0-alpha.6
+    dev: false
+
+  /@tauri-apps/plugin-store@2.0.0-alpha.1:
+    resolution: {integrity: sha512-rchpcLw9H2Q+hXOTW5HVrUrQupcK6LJ81vY1Y/OAaSu+XwvK25gE1f3ILAMNwTnhTbBzCqbuK0y1m51Kb+ALmA==}
     dependencies:
       '@tauri-apps/api': 2.0.0-alpha.6
     dev: false
@@ -5793,11 +5799,3 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
     dev: true
-
-  github.com/tauri-apps/tauri-plugin-store/119df69002ba130db3ab693c33b8677a0afe5659:
-    resolution: {tarball: https://codeload.github.com/tauri-apps/tauri-plugin-store/tar.gz/119df69002ba130db3ab693c33b8677a0afe5659}
-    name: '@tauri-apps/plugin-store'
-    version: 2.0.0-alpha.3
-    dependencies:
-      '@tauri-apps/api': 2.0.0-alpha.11
-    dev: false

@@ -13,7 +13,7 @@ edition = "2021"
 tauri-build = { version = "1.4", features = [] }
 
 [dependencies]
-tauri = { version = "2.0.0-alpha", features = [] }
+tauri = { version = "2.0.0-alpha.12", features = [] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.107"
 espflash = { git = "https://github.com/ajmcquilkin/espflash.git", default-features = false, rev = "8b2124453043d77a6ff82b0da11fdc02e6124c00" }
@@ -27,7 +27,7 @@ tauri-plugin-dialog = "2.0.0-alpha.2"
 tauri-plugin-log = "2.0.0-alpha"
 tauri-plugin-os = "2.0.0-alpha.2"
 tauri-plugin-shell = "2.0.0-alpha.2"
-tauri-plugin-store = "2.0.0-alpha.2"
+tauri-plugin-store = "2.0.0-alpha.1"
 tauri-plugin-window = "2.0.0-alpha.2"
 log = "0.4.20"
 bytes = "1.5.0"

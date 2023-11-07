@@ -8,17 +8,13 @@ import {
 import { Copy, Trash2, Check, X, Loader, GripVertical } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { listen } from "@tauri-apps/api/event";
-import groupBy from "lodash.groupby";
-import orderBy from "lodash.orderby";
 
-import { BoardOptionData } from "../types/types";
 import {
-  Board,
-  FirmwareRelease,
-  ListBoardsResponse,
-  ListFirmwareResponse,
-  SerialPortInfo,
-} from "../types/backend";
+  BoardArchitectureDictionary,
+  BoardOptionData,
+  FirmwareReleaseDictionary,
+} from "../types/types";
+import { Board, FirmwareRelease, SerialPortInfo } from "../types/backend";
 import DefaultTooltip from "./generic/DefaultTooltip";
 import { useEffect, useState } from "react";
 // import ProgressBar from "./ProgressBar";
@@ -29,8 +25,8 @@ export interface BoardOptionProps {
   selectedBoard: Board | null;
   requestState: "pending" | "success" | "error" | null;
 
-  availableBoards: ListBoardsResponse;
-  availableFirmwareVersions: ListFirmwareResponse["releases"];
+  availableBoards: BoardArchitectureDictionary;
+  availableFirmwareVersions: FirmwareReleaseDictionary;
   availableSerialPorts: SerialPortInfo[];
 
   setHwModel: (hwModel: Board["hwModel"]) => void;
@@ -58,16 +54,6 @@ const BoardOption = ({
   deleteSelf,
 }: BoardOptionProps) => {
   const [_, setProgress] = useState<number>(0);
-
-  // Sort first by supported then by alphabetical
-  const groupedBoards = groupBy(
-    orderBy(
-      availableBoards,
-      [(board) => board.activelySupported, (board) => board.displayName],
-      ["desc", "asc"]
-    ),
-    (board) => board.architecture
-  );
 
   // Workaround to allow for async cleanup functions
   useEffect(() => {
@@ -108,6 +94,12 @@ const BoardOption = ({
     setSerialPort(result as string); // Not allowing multiple dirs, can ignore string[]
   };
 
+  const areValidBoardVariants = !!Object.values(availableBoards).flat().length;
+  const areValidSerialPorts = !!availableSerialPorts.length;
+  const areValidFirmwareVersions = !!Object.values(
+    availableFirmwareVersions
+  ).flat().length;
+
   return (
     <div className="flex flex-row justify-between px-4 py-3 border border-gray-100 shadow-md rounded-lg">
       <div className="flex flex-row justify-start gap-4">
@@ -116,16 +108,24 @@ const BoardOption = ({
         </DefaultTooltip>
 
         <Select.Root
-          value={`${boardOptionData.selectedHwModel}`}
+          value={boardOptionData.selectedHwModel?.toString() ?? undefined}
           onValueChange={(board) => setHwModel(parseInt(board))}
         >
           <Select.Trigger
             className="flex flex-row gap-2 text-gray-500"
-            aria-label="Devices"
+            aria-label="Available board variants"
           >
-            <Select.Value placeholder="Device" />
+            <Select.Value
+              placeholder={
+                areValidBoardVariants
+                  ? "Select a board variant"
+                  : "Could not fetch board variants"
+              }
+            />
             <Select.Icon className="my-auto">
-              <ChevronDownIcon />
+              <ChevronDownIcon
+                className={`${areValidBoardVariants ? "block" : "hidden"}`}
+              />
             </Select.Icon>
           </Select.Trigger>
 
@@ -136,10 +136,10 @@ const BoardOption = ({
               </Select.ScrollUpButton>
 
               <Select.Viewport className="">
-                {Object.entries(groupedBoards)
+                {Object.entries(availableBoards)
                   .sort(([a], [b]) => a.localeCompare(b))
                   .map(([architecture, boards], index) => (
-                    <>
+                    <div key={architecture}>
                       <Select.Group>
                         <Select.Label className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">
                           {architecture.toLocaleUpperCase()}
@@ -147,9 +147,10 @@ const BoardOption = ({
 
                         {boards.map((board) => (
                           <Select.Item
+                            key={board.hwModel}
                             className={`flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer ${
                               board.activelySupported
-                                ? "text-gray-500"
+                                ? "text-gray-600"
                                 : "text-gray-400"
                             }`}
                             value={`${board.hwModel}`}
@@ -169,10 +170,10 @@ const BoardOption = ({
                         ))}
                       </Select.Group>
 
-                      {index !== Object.keys(groupedBoards).length - 1 ? (
+                      {index !== Object.keys(availableBoards).length - 1 ? (
                         <Select.Separator className="mx-1 my-3 h-px bg-gray-300" />
                       ) : null}
-                    </>
+                    </div>
                   ))}
               </Select.Viewport>
 
@@ -185,16 +186,22 @@ const BoardOption = ({
 
         {selectedBoard?.architecture.includes("esp") ? (
           <Select.Root
-            value={`${boardOptionData.selectedPort}`}
+            value={boardOptionData.selectedPort ?? undefined}
             onValueChange={(port) => setSerialPort(port)}
           >
             <Select.Trigger
               className="flex flex-row gap-2 text-gray-500"
-              aria-label="Serial ports"
+              aria-label="Available serial ports"
             >
-              <Select.Value placeholder="Serial Port" />
+              <Select.Value
+                placeholder={
+                  areValidSerialPorts ? "Select a port" : "No ports detected"
+                }
+              />
               <Select.Icon className="my-auto">
-                <ChevronDownIcon />
+                <ChevronDownIcon
+                  className={`${areValidSerialPorts ? "block" : "hidden"}`}
+                />
               </Select.Icon>
             </Select.Trigger>
 
@@ -212,12 +219,11 @@ const BoardOption = ({
 
                     {availableSerialPorts.map((port) => (
                       <Select.Item
-                        className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer"
+                        key={port.port_name}
+                        className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer text-gray-600"
                         value={port.port_name}
                       >
-                        <Select.ItemText className="text-gray-500">
-                          {port.port_name}
-                        </Select.ItemText>
+                        <Select.ItemText>{port.port_name}</Select.ItemText>
                         <Select.ItemIndicator className="my-auto">
                           <CheckIcon />
                         </Select.ItemIndicator>
@@ -243,16 +249,24 @@ const BoardOption = ({
         )}
 
         <Select.Root
-          value={`${boardOptionData.selectedFirmwareVersion}`}
+          value={boardOptionData.selectedFirmwareVersion ?? undefined}
           onValueChange={(version) => setFirmwareVersion(version)}
         >
           <Select.Trigger
             className="flex flex-row gap-2 text-gray-500"
-            aria-label="Firmware versions"
+            aria-label="Available firmware versions"
           >
-            <Select.Value placeholder="Firmware Version" />
+            <Select.Value
+              placeholder={
+                areValidFirmwareVersions
+                  ? "Select a firmware version"
+                  : "Could not fetch firmware versions"
+              }
+            />
             <Select.Icon className="my-auto">
-              <ChevronDownIcon />
+              <ChevronDownIcon
+                className={`${areValidFirmwareVersions ? "block" : "hidden"}`}
+              />
             </Select.Icon>
           </Select.Trigger>
 
@@ -263,49 +277,35 @@ const BoardOption = ({
               </Select.ScrollUpButton>
 
               <Select.Viewport className="">
-                <Select.Group>
-                  <Select.Label className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">
-                    Stable
-                  </Select.Label>
+                {Object.entries(availableFirmwareVersions)
+                  .sort(([a], [b]) => b.localeCompare(a))
+                  .map(([versionType, versions], index) => (
+                    <div key={versionType}>
+                      <Select.Group>
+                        <Select.Label className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">
+                          {versionType.toLocaleUpperCase()}
+                        </Select.Label>
 
-                  {availableFirmwareVersions.stable.map((version) => (
-                    <Select.Item
-                      key={version.id}
-                      className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer"
-                      value={version.id}
-                    >
-                      <Select.ItemText className="text-gray-500">
-                        {version.id}
-                      </Select.ItemText>
-                      <Select.ItemIndicator className="my-auto">
-                        <CheckIcon />
-                      </Select.ItemIndicator>
-                    </Select.Item>
+                        {versions.map((version) => (
+                          <Select.Item
+                            key={version.id}
+                            className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer text-gray-600"
+                            value={version.id}
+                          >
+                            <Select.ItemText>{version.id}</Select.ItemText>
+                            <Select.ItemIndicator className="my-auto">
+                              <CheckIcon />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.Group>
+
+                      {index !==
+                      Object.keys(availableFirmwareVersions).length - 1 ? (
+                        <Select.Separator className="mx-1 my-3 h-px bg-gray-300" />
+                      ) : null}
+                    </div>
                   ))}
-                </Select.Group>
-
-                <Select.Separator className="mx-1 my-3 h-px bg-gray-300" />
-
-                <Select.Group>
-                  <Select.Label className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">
-                    Alpha
-                  </Select.Label>
-
-                  {availableFirmwareVersions.alpha.map((version) => (
-                    <Select.Item
-                      key={version.id}
-                      className="flex flex-row gap-2 px-2 py-1 rounded-md hover:bg-gray-200 select-none cursor-pointer"
-                      value={version.id}
-                    >
-                      <Select.ItemText className="text-gray-500">
-                        {version.id}
-                      </Select.ItemText>
-                      <Select.ItemIndicator className="my-auto">
-                        <CheckIcon />
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                  ))}
-                </Select.Group>
               </Select.Viewport>
 
               <Select.ScrollDownButton className="mx-auto">

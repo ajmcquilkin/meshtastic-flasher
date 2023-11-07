@@ -7,9 +7,10 @@ const WelcomeScreenDialog = () => {
     <Dialog.Portal>
       {/* Tracking https://github.com/radix-ui/primitives/issues/1159 */}
       <div className="fixed inset-0 bg-gray-900/[0.4]" />
-      <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col bg-white default-overlay">
-        <div className="flex flex-row max-w-[80vw] max-h-[80vh]">
-          <div className="hidden md:block my-auto w-[500px] relative flex-1 bg-white">
+
+      <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col default-overlay">
+        <div className="flex flex-row max-w-[80vw] max-h-[80vh] rounded-lg">
+          <div className="hidden md:block my-auto w-[500px] relative flex-1">
             <img src={Rak19007Render} alt="Render of RAK19007 board" />
           </div>
 

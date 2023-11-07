@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import { Store } from "@tauri-apps/plugin-store";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowUpFromLine, Loader, Plus } from "lucide-react";
 import { info, error } from "@tauri-apps/plugin-log";
+import groupBy from "lodash.groupby";
+import orderBy from "lodash.orderby";
 
 import {
+  Board,
   ListBoardsResponse,
   ListFirmwareResponse,
   SerialPortInfo,
@@ -23,16 +25,43 @@ import {
   createSetBoardVersionAction,
 } from "./state/actions";
 import WelcomeScreen from "./components/WelcomeScreenDialog";
-import { BoardOptionData } from "./types/types";
+import {
+  BoardArchitectureDictionary,
+  BoardOptionData,
+  FirmwareReleaseDictionary,
+} from "./types/types";
+import { usePersistentStore } from "./persistence";
+
+const getFirstBoard = (
+  availableBoards: BoardArchitectureDictionary
+): Board | null => {
+  const firstArchitecture = Object.keys(availableBoards)?.[0];
+  return availableBoards?.[firstArchitecture]?.[0] ?? null;
+};
+
+const findBoardByHwModel = (
+  availableBoards: BoardArchitectureDictionary,
+  hwModel: number | null
+): Board | null => {
+  if (!hwModel) {
+    return null;
+  }
+
+  const board = Object.values(availableBoards)
+    .flat()
+    .find((b) => b.hwModel === hwModel);
+
+  return board ?? null;
+};
 
 const App = () => {
-  const [listFirmwareReponse, setListFirmwareResponse] =
-    useState<ListFirmwareResponse | null>(null);
-  const [listBoardsResponse, setListBoardsResponse] =
-    useState<ListBoardsResponse | null>(null);
+  const [availableBoards, setAvailableBoards] =
+    useState<BoardArchitectureDictionary | null>(null);
   const [availableSerialPorts, setAvailableSerialPorts] = useState<
     SerialPortInfo[] | null
   >(null);
+  const [availableFirmwareVersions, setAvailableFirmwareVersions] =
+    useState<FirmwareReleaseDictionary | null>(null);
 
   const [flashStates, setFlashStates] = useState<{
     [port: string]: "pending" | "success" | "error" | null;
@@ -41,16 +70,26 @@ const App = () => {
   const [showWelcomeScreen, setShowWelcomeScreen] = useState(false);
 
   const [state, dispatch] = useAppReducer();
+  const persistentStore = usePersistentStore();
+
+  const handleUpdateShowWelcomeScreen = async (
+    shouldShowWelcomeScreen: boolean
+  ) => {
+    await persistentStore.set("hasSeenWelcomeScreen", !shouldShowWelcomeScreen);
+    info(`Setting 'hasSeenWelcomeScreen' to ${!shouldShowWelcomeScreen}`);
+    setShowWelcomeScreen(shouldShowWelcomeScreen);
+  };
 
   useEffect(() => {
     const handleCreateStore = async () => {
-      const store = new Store(".settings.dat");
-      const hasSeenWelcomeScreen = await store.get("hasSeenWelcomeScreen");
+      const hasSeenWelcomeScreen = await persistentStore.get(
+        "hasSeenWelcomeScreen"
+      );
 
       if (!hasSeenWelcomeScreen) {
-        setShowWelcomeScreen(true);
+        await handleUpdateShowWelcomeScreen(true);
         info("Persisting that user has seen welcome screen");
-        await store.set("hasSeenWelcomeScreen", true);
+        await persistentStore.set("hasSeenWelcomeScreen", true);
       } else {
         info("User has already seen welcome screen");
       }
@@ -60,21 +99,31 @@ const App = () => {
   }, []);
 
   const getBoards = async () => {
-    const boards = (await invoke(
+    const receivedBoards = (await invoke(
       "fetch_supported_boards"
     )) as ListBoardsResponse;
-    info(`Received ${boards.length} boards from backend`);
-    setListBoardsResponse(boards);
+    info(`Received ${receivedBoards.length} boards from backend`);
+
+    const groupedBoards = groupBy(
+      orderBy(
+        receivedBoards,
+        [(board) => board.activelySupported, (board) => board.displayName],
+        ["desc", "asc"]
+      ),
+      (board) => board.architecture
+    );
+
+    setAvailableBoards(groupedBoards);
   };
 
   const getFirmwareReleases = async () => {
-    const releases = (await invoke(
+    const releasesResponse = (await invoke(
       "fetch_firmware_releases"
     )) as ListFirmwareResponse;
     info(
-      `Received ${releases.releases.alpha.length} alpha and ${releases.releases.stable.length} stable firmware releases from backend`
+      `Received ${releasesResponse.releases.alpha?.length} alpha and ${releasesResponse.releases.stable?.length} stable firmware releases from backend`
     );
-    setListFirmwareResponse(releases);
+    setAvailableFirmwareVersions(releasesResponse.releases);
   };
 
   const getAvailableSerialPorts = async () => {
@@ -119,10 +168,13 @@ const App = () => {
   };
 
   return (
-    <Dialog.Root open={showWelcomeScreen} onOpenChange={setShowWelcomeScreen}>
+    <Dialog.Root
+      open={showWelcomeScreen}
+      onOpenChange={(show) => handleUpdateShowWelcomeScreen(show)}
+    >
       <div className="relative w-full min-h-screen bg-white">
         <Titlebar
-          showWelcomeScreen={() => setShowWelcomeScreen(true)}
+          showWelcomeScreen={() => handleUpdateShowWelcomeScreen(true)}
           refreshSerialPorts={() => getAvailableSerialPorts()}
         />
 
@@ -143,26 +195,27 @@ const App = () => {
         </div>
 
         <div className="w-full h-full">
-          {listBoardsResponse && listFirmwareReponse && availableSerialPorts ? (
+          {availableBoards &&
+          availableFirmwareVersions &&
+          availableSerialPorts ? (
             <div className="flex flex-col gap-4 mx-auto max-w-[900px]">
               <div className="flex flex-col gap-4 p-4">
                 {state.boards.map((boardOption, index) => (
                   <BoardOption
                     key={index}
                     boardOptionData={boardOption}
-                    selectedBoard={
-                      listBoardsResponse.find(
-                        (b) => b.hwModel === boardOption.selectedHwModel
-                      ) ?? null
-                    }
+                    selectedBoard={findBoardByHwModel(
+                      availableBoards,
+                      boardOption.selectedHwModel
+                    )}
                     requestState={
                       boardOption?.selectedPort
                         ? flashStates[boardOption.selectedPort] ?? null
                         : null
                     }
-                    availableBoards={listBoardsResponse}
-                    availableFirmwareVersions={listFirmwareReponse.releases}
+                    availableBoards={availableBoards}
                     availableSerialPorts={availableSerialPorts}
+                    availableFirmwareVersions={availableFirmwareVersions}
                     deleteSelf={() => {
                       dispatch(createDeleteBoardAction(index));
                     }}
@@ -187,10 +240,11 @@ const App = () => {
                 onClick={() => {
                   dispatch(
                     createAddBoardAction({
-                      selectedHwModel: listBoardsResponse?.[0].hwModel ?? null,
+                      selectedHwModel:
+                        getFirstBoard(availableBoards)?.hwModel ?? null,
                       selectedPort: null,
                       selectedFirmwareVersion:
-                        listFirmwareReponse.releases.stable?.[0].id ?? null,
+                        availableFirmwareVersions.stable?.[0].id ?? null,
                     })
                   );
                 }}

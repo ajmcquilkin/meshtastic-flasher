@@ -5,3 +5,6 @@ export interface BoardOptionData {
   selectedPort: string | null;
   selectedFirmwareVersion: FirmwareRelease["id"] | null;
 }
+
+export type BoardArchitectureDictionary = Record<string, Board[]>;
+export type FirmwareReleaseDictionary = Record<string, FirmwareRelease[]>;
