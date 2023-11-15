@@ -4,6 +4,7 @@ import { writeText } from "@tauri-apps/api/clipboard";
 import { open } from "@tauri-apps/api/shell";
 import { getCurrent } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/tauri";
+import { message } from "@tauri-apps/api/dialog";
 import { info, error, debug, trace } from "tauri-plugin-log-api";
 import { checkUpdate, installUpdate } from "@tauri-apps/api/updater";
 import { relaunch } from "@tauri-apps/api/process";
@@ -115,6 +116,8 @@ const App = () => {
         await relaunch();
 
         info("Application restarted");
+
+        await message(`Your application has been updated to v${APP_VERSION}!`);
       } catch (err) {
         error(`Failed to check for updates: ${err}`);
       }
