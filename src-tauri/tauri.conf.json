@@ -111,10 +111,9 @@
       "endpoints": [
         "https://api.meshtastic.org/updater/meshtastic-desktop-flasher/{{target}}/{{arch}}/{{current_version}}"
       ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlEQ0MyMDM3RTE4MDBFN0IKUldSN0RvRGhOeURNblpSeDNjTzJYRVpvd2tqaGhsSm9IMEhlK1RGRkx0Q1FRaElzc3FTZjZiUHkK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDk1MzdEMEU4QjFCN0UzNTQKUldSVTQ3ZXg2TkEzbGNpRE5ZVnVyZlMyejdSOFh4aTVBZHZYM3c0UnNDZjI0QUhGbmhHRU5FV2EK",
       "windows": {
-        "installMode": "basicUi",
-        "installerArgs": []
+        "installMode": "basicUi"
       }
     },
     "windows": [
