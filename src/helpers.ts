@@ -1,5 +1,5 @@
-import { error } from "@tauri-apps/plugin-log";
-import { open } from "@tauri-apps/plugin-shell";
+import { error } from "tauri-plugin-log-api";
+import { open } from "@tauri-apps/api/shell";
 
 export const openLink = async (link: string) => {
   try {

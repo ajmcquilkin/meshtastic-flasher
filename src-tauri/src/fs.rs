@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 use tokio::{fs::File, io::AsyncWriteExt};
 use zip::ZipArchive;
 
@@ -12,17 +12,13 @@ use crate::{api, flasher::FirmwareVersion};
 pub async fn create_or_locate_firmware_directory(
     app_handle: &AppHandle,
 ) -> Result<PathBuf, String> {
-    let path_resolver = app_handle.path();
+    let path_resolver = app_handle.path_resolver();
 
     let app_data_dir = match path_resolver.app_data_dir() {
-        Ok(app_data_dir) => app_data_dir,
-        Err(e) => {
-            log::error!(
-                "Error while resolving app data directory: {}",
-                e.to_string()
-            );
-
-            return Err(format!("Error while resolving app data directory: {}", e));
+        Some(app_data_dir) => app_data_dir,
+        None => {
+            log::error!("Error while resolving app data directory");
+            return Err(format!("Error while resolving app data directory"));
         }
     };
 
@@ -167,14 +163,13 @@ pub fn get_temp_file_path(
     app_handle: &AppHandle,
     firmware_file_name: String,
 ) -> Result<PathBuf, String> {
-    let path_resolver = app_handle.path();
+    let path_resolver = app_handle.path_resolver();
 
-    let temp_file_path = match path_resolver.temp_dir() {
-        Ok(temp_dir) => temp_dir.join(firmware_file_name.clone()),
-        Err(e) => {
-            log::error!("Error while resolving temp directory: {}", e.to_string());
-
-            return Err(format!("Error while resolving temp directory: {}", e));
+    let temp_file_path = match path_resolver.app_cache_dir() {
+        Some(temp_dir) => temp_dir.join(firmware_file_name.clone()),
+        None => {
+            log::error!("Error while resolving temp directory");
+            return Err(format!("Error while resolving temp directory"));
         }
     };
 

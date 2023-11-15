@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { appLogDir, join } from "@tauri-apps/api/path";
-import { writeText } from "@tauri-apps/plugin-clipboard-manager";
-import { open } from "@tauri-apps/plugin-shell";
-import { getCurrent } from "@tauri-apps/plugin-window";
+import { writeText } from "@tauri-apps/api/clipboard";
+import { open } from "@tauri-apps/api/shell";
+import { getCurrent } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/tauri";
 
 import * as Menubar from "@radix-ui/react-menubar";
-import { error, info } from "@tauri-apps/plugin-log";
+import { error, info } from "tauri-plugin-log-api";
 import {
   ActivityLogIcon,
   ClipboardCopyIcon,

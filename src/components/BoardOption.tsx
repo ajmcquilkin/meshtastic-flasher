@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open } from "@tauri-apps/api/dialog";
 import { listen } from "@tauri-apps/api/event";
-import { info } from "@tauri-apps/plugin-log";
+import { info } from "tauri-plugin-log-api";
 
 import * as Select from "@radix-ui/react-select";
 import {

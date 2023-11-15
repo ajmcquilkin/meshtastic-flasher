@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
+import { appLogDir, join } from "@tauri-apps/api/path";
+import { writeText } from "@tauri-apps/api/clipboard";
+import { open } from "@tauri-apps/api/shell";
+import { getCurrent } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/tauri";
+import { info, error, debug, trace } from "tauri-plugin-log-api";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowUpFromLine, Loader, Plus } from "lucide-react";
-import { info, error } from "@tauri-apps/plugin-log";
 import groupBy from "lodash.groupby";
 import orderBy from "lodash.orderby";
 
@@ -13,7 +17,7 @@ import {
   SerialPortInfo,
 } from "./types/backend";
 import BoardOption from "./components/BoardOption";
-import Titlebar from "./components/Titlebar";
+// import Titlebar from "./components/Titlebar";
 import DefaultTooltip from "./components/generic/DefaultTooltip";
 import { useAppReducer } from "./state/reducer";
 import {
@@ -31,6 +35,8 @@ import {
   FirmwareReleaseDictionary,
 } from "./types/types";
 import { usePersistentStore } from "./persistence";
+import { openLink } from "./helpers";
+import { listen } from "@tauri-apps/api/event";
 
 const getFirstBoard = (
   availableBoards: BoardArchitectureDictionary
@@ -72,6 +78,152 @@ const App = () => {
   const [state, dispatch] = useAppReducer();
   const persistentStore = usePersistentStore();
 
+  const currentWindow = getCurrent();
+  const [isFullscreen, setFullscreen] = useState(false);
+
+  useEffect(() => {
+    const getIsFullscreen = async () => {
+      setFullscreen(await currentWindow.isFullscreen());
+    };
+
+    getIsFullscreen();
+  }, [currentWindow]);
+
+  useEffect(() => {
+    const unlistenRefreshSerialPorts = listen<string>(
+      "refresh_serial_ports",
+      (e) => {
+        trace(`Received refresh_serial_ports event: ${e}`);
+        handleRefreshSerialPorts();
+      }
+    );
+
+    const unlistenShowWelcomeScreen = listen<string>(
+      "show_welcome_screen",
+      (e) => {
+        trace(`Received show_welcome_screen event: ${e}`);
+        handleShowWelcomeScreen();
+      }
+    );
+
+    const unlistenToggleFullscreen = listen<string>(
+      "toggle_fullscreen",
+      (e) => {
+        trace(`Received toggle_fullscreen event: ${e}`);
+        handleToggleFullscreen();
+      }
+    );
+
+    const unlistenRakWirelessDiscount = listen<string>(
+      "rak_wireless_discount",
+      (e) => {
+        trace(`Received rak_wireless_discount event: ${e}`);
+        handleOpenLink("https://rakwireless.kckb.st/ab922280");
+      }
+    );
+
+    const unlistenSupportMyWork = listen<string>("support_my_work", (e) => {
+      trace(`Received support_my_work event: ${e}`);
+      handleOpenLink("https://github.com/sponsors/ajmcquilkin");
+    });
+
+    const unlistenCopyVersionNumber = listen<string>(
+      "copy_version_number",
+      (e) => {
+        trace(`Received copy_version_number event: ${e}`);
+        handleCopyVersionNumber();
+      }
+    );
+
+    const unlistenCopyLogDirectory = listen<string>(
+      "copy_log_directory",
+      (e) => {
+        trace(`Received copy_log_directory event: ${e}`);
+        handleCopyLogDir();
+      }
+    );
+
+    const unlistenOpenLogFile = listen<string>("open_log_file", (e) => {
+      trace(`Received open_log_file event: ${e}`);
+      handleOpenLogFile();
+    });
+
+    const unlistenReportBug = listen<string>("report_bug", (e) => {
+      trace(`Received report_bug event: ${e}`);
+      handleOpenLink(
+        "https://github.com/ajmcquilkin/meshtastic-flasher/issues"
+      );
+    });
+
+    return () => {
+      unlistenRefreshSerialPorts.then((fn) => fn()).catch(console.error);
+      unlistenShowWelcomeScreen.then((fn) => fn()).catch(console.error);
+      unlistenToggleFullscreen.then((fn) => fn()).catch(console.error);
+      unlistenRakWirelessDiscount.then((fn) => fn()).catch(console.error);
+      unlistenSupportMyWork.then((fn) => fn()).catch(console.error);
+      unlistenCopyVersionNumber.then((fn) => fn()).catch(console.error);
+      unlistenCopyLogDirectory.then((fn) => fn()).catch(console.error);
+      unlistenOpenLogFile.then((fn) => fn()).catch(console.error);
+      unlistenReportBug.then((fn) => fn()).catch(console.error);
+    };
+  }, [currentWindow, setFullscreen]);
+
+  const handleRefreshSerialPorts = async () => {
+    getAvailableSerialPorts();
+  };
+
+  const handleCopyVersionNumber = async () => {
+    try {
+      info(`Writing app version to clipboard: ${APP_VERSION}`);
+      await writeText(APP_VERSION);
+      info("Wrote app version to clipboard");
+    } catch (err) {
+      error(`Failed to write app version to clipboard: ${err}`);
+    }
+  };
+
+  const handleToggleFullscreen = async () => {
+    try {
+      debug(`Fullscreen state before toggle: ${isFullscreen}`);
+      await currentWindow.setFullscreen(!isFullscreen);
+      setFullscreen(!isFullscreen);
+      debug(`Fullscreen state after toggle: ${isFullscreen}`);
+    } catch (err) {
+      error(`Failed to toggle fullscreen: ${err}`);
+    }
+  };
+
+  const handleShowWelcomeScreen = () => {
+    handleUpdateShowWelcomeScreen(true);
+  };
+
+  // Tauri currently can't open directories natively
+  const handleCopyLogDir = async () => {
+    try {
+      const logDir = await appLogDir();
+      info(`Writing log directory to clipboard: ${logDir}`);
+      await writeText(logDir);
+      info("Wrote log directory to clipboard");
+    } catch (err) {
+      error(`Failed to copy log directory to clipboard: ${err}`);
+    }
+  };
+
+  const handleOpenLogFile = async () => {
+    try {
+      const logFile = await join(await appLogDir(), "application.log");
+      info(`Opening application log file: ${logFile}`);
+      await open(logFile);
+      info("Triggered request to open application log file");
+    } catch (err) {
+      error(`Failed to open application log file: ${err}`);
+    }
+  };
+
+  const handleOpenLink = async (link: string) => {
+    await openLink(link);
+  };
+
   const handleUpdateShowWelcomeScreen = async (
     shouldShowWelcomeScreen: boolean
   ) => {
@@ -96,7 +248,7 @@ const App = () => {
     };
 
     handleCreateStore();
-  }, []);
+  }, [currentWindow]);
 
   const getBoards = async () => {
     const receivedBoards = (await invoke(
@@ -173,13 +325,12 @@ const App = () => {
       onOpenChange={(show) => handleUpdateShowWelcomeScreen(show)}
     >
       <div className="relative w-full min-h-screen bg-white">
-        <Titlebar
+        {/* Need to wait until Tauri v2.0.0 is stable */}
+        {/* <Titlebar
           showWelcomeScreen={() => handleUpdateShowWelcomeScreen(true)}
           refreshSerialPorts={() => getAvailableSerialPorts()}
-        />
-
+        /> */}
         <WelcomeScreen />
-
         <div className="absolute bottom-9 right-9">
           <DefaultTooltip text="Flash devices">
             <button
@@ -193,7 +344,6 @@ const App = () => {
             </button>
           </DefaultTooltip>
         </div>
-
         <div className="w-full h-full">
           {availableBoards &&
           availableFirmwareVersions &&

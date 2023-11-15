@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { info, attachConsole } from "@tauri-apps/plugin-log";
+import { info, attachConsole } from "tauri-plugin-log-api";
 
 import App from "./App";
 import { PersistentStoreContext, store } from "./persistence";

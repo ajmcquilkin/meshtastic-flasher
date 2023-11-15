@@ -10,26 +10,21 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.4", features = [] }
+tauri-build = { version = "1.5.0", features = [] }
 
 [dependencies]
-tauri = { version = "2.0.0-alpha.12", features = [] }
+tauri = { version = "1.5.2", features = [ "window-set-fullscreen", "dialog-all", "shell-open", "path-all", "http-all", "notification-all", "clipboard-write-text", "updater"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.107"
-espflash = { git = "https://github.com/ajmcquilkin/espflash.git", default-features = false, rev = "8b2124453043d77a6ff82b0da11fdc02e6124c00" }
+espflash = { git = "https://github.com/ajmcquilkin/espflash.git", default-features = false, rev = "0b378cb7be00a9ed1b79bf54f0af7b26f7869ad3" }
 tokio = "1.32.0"
 reqwest = { version = "0.11.20", features = ["json"] }
 zip = "0.6.6"
 serialport = { version = "4.2.2", features = ["serde"] }
 regex = "1.9.5"
-tauri-plugin-clipboard-manager = "2.0.0-alpha.2"
-tauri-plugin-dialog = "2.0.0-alpha.2"
-tauri-plugin-log = "2.0.0-alpha"
-tauri-plugin-os = "2.0.0-alpha.2"
-tauri-plugin-shell = "2.0.0-alpha.2"
-tauri-plugin-store = "2.0.0-alpha.1"
-tauri-plugin-window = "2.0.0-alpha.2"
 log = "0.4.20"
+tauri-plugin-log = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
+tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 bytes = "1.5.0"
 
 [features]
