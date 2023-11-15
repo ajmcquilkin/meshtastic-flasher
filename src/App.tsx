@@ -5,6 +5,9 @@ import { open } from "@tauri-apps/api/shell";
 import { getCurrent } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/tauri";
 import { info, error, debug, trace } from "tauri-plugin-log-api";
+import { checkUpdate, installUpdate } from "@tauri-apps/api/updater";
+import { relaunch } from "@tauri-apps/api/process";
+
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowUpFromLine, Loader, Plus } from "lucide-react";
 import groupBy from "lodash.groupby";
@@ -88,6 +91,37 @@ const App = () => {
 
     getIsFullscreen();
   }, [currentWindow]);
+
+  useEffect(() => {
+    const asyncHelper = async () => {
+      try {
+        const { shouldUpdate, manifest } = await checkUpdate();
+
+        if (!shouldUpdate) {
+          info("No update available");
+          return;
+        }
+
+        info(
+          `Installing update ${manifest?.version}, ${manifest?.date}, ${manifest?.body}`
+        );
+
+        // Install update, which will restart the app on Windows.
+        await installUpdate();
+
+        info("Update installed, restarting application");
+
+        // Needed for macOS and Linux to restart the app manually.
+        await relaunch();
+
+        info("Application restarted");
+      } catch (err) {
+        error(`Failed to check for updates: ${err}`);
+      }
+    };
+
+    asyncHelper();
+  }, []);
 
   useEffect(() => {
     const unlistenRefreshSerialPorts = listen<string>(
