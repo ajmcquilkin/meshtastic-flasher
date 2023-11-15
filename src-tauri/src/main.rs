@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use log::{debug, error, info};
 use tauri::{CustomMenuItem, Manager, Menu, MenuItem, Submenu};
 use tauri_plugin_log::LogTarget;
 
@@ -148,6 +149,30 @@ fn main() {
 
     tauri::Builder::default()
         .menu(menu)
+        .setup(|app| {
+            let app_handle = app.handle();
+
+            tauri::async_runtime::spawn(async move {
+                match tauri::updater::builder(app_handle).check().await {
+                    Ok(update) => {
+                        debug!("Update check completed successfully");
+
+                        if !update.is_update_available() {
+                            return;
+                        }
+
+                        debug!("Update available, downloading and installing");
+                        update.download_and_install().await.unwrap();
+                        info!("Update installed, restarting application");
+                    }
+                    Err(e) => {
+                        error!("Error checking for updates: {}", e);
+                    }
+                }
+            });
+
+            Ok(())
+        })
         .setup(|app| {
             let window = app.get_window("main").ok_or("Could not find main window")?;
             let app_handle = app.app_handle().clone();
