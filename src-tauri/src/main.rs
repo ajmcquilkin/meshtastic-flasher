@@ -106,7 +106,7 @@ fn build_menu() -> Menu {
         Menu::new()
             .add_item(CustomMenuItem::new(
                 MenuItemId::CopyVersionNumber.id(),
-                "Copy Version Number".to_string(),
+                format!("Version {} (click to copy)", env!("CARGO_PKG_VERSION")),
             ))
             .add_native_item(MenuItem::About(
                 "Meshtastic Desktop Flasher".to_string(),
