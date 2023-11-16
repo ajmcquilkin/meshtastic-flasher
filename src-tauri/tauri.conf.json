@@ -9,7 +9,7 @@
   },
   "package": {
     "productName": "Meshtastic Desktop Flasher",
-    "version": "0.3.3"
+    "version": "0.3.2"
   },
   "plugins": {
     "fs": {
