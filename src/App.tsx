@@ -4,6 +4,7 @@ import { writeText } from "@tauri-apps/api/clipboard";
 import { open } from "@tauri-apps/api/shell";
 import { getCurrent } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/tauri";
+import { listen } from "@tauri-apps/api/event";
 import { info, error, debug, trace } from "tauri-plugin-log-api";
 
 import * as Dialog from "@radix-ui/react-dialog";
@@ -37,7 +38,6 @@ import {
 } from "./types/types";
 import { usePersistentStore } from "./persistence";
 import { openLink } from "./helpers";
-import { listen } from "@tauri-apps/api/event";
 
 const getFirstBoard = (
   availableBoards: BoardArchitectureDictionary
