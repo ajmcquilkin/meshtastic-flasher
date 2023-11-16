@@ -107,7 +107,7 @@
     },
     "updater": {
       "active": true,
-      "dialog": true,
+      "dialog": false,
       "endpoints": [
         "https://api.meshtastic.org/updater/meshtastic-desktop-flasher/{{target}}/{{arch}}/{{current_version}}"
       ],

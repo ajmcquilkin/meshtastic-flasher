@@ -1,7 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-// use log::{debug, error, info};
+use log::{debug, error, info};
 use tauri::{CustomMenuItem, Manager, Menu, MenuItem, Submenu};
 use tauri_plugin_log::LogTarget;
 
@@ -149,28 +149,59 @@ fn main() {
 
     tauri::Builder::default()
         .menu(menu)
-        // .setup(|app| {
-        //     let app_handle = app.handle();
-        //     tauri::async_runtime::spawn(async move {
-        //         match tauri::updater::builder(app_handle).check().await {
-        //             Ok(update) => {
-        //                 debug!("Update check completed successfully");
-        //                 if !update.is_update_available() {
-        //                     return;
-        //                 }
-        //                 debug!("Update available, downloading and installing");
-        //                 update.download_and_install().await.unwrap();
-        //                 info!("Update installed, restarting application");
-        //             }
-        //             Err(e) => {
-        //                 error!("Error checking for updates: {}", e);
-        //             }
-        //         }
-        //     });
-        //     Ok(())
-        // })
         .setup(|app| {
             let window = app.get_window("main").ok_or("Could not find main window")?;
+
+            let app_handle = app.app_handle().clone();
+
+            debug!("Spawning updater task...");
+
+            tauri::async_runtime::spawn(async move {
+                let main_window = app_handle.get_window("main");
+                let main_window_ref = main_window.as_ref();
+
+                match tauri::updater::builder(app_handle.clone()).check().await {
+                    Ok(update) => {
+                        if !update.is_update_available() {
+                            debug!("No update available");
+                            return;
+                        }
+
+                        let latest_version = update.latest_version().to_string();
+
+                        let should_update = tauri::api::dialog::blocking::ask(
+                            main_window_ref,
+                            format!("Update available to version {}", latest_version),
+                            format!("Update is available from current version {} to {}. Would you like to install it now?", env!("CARGO_PKG_VERSION"), latest_version),
+                        );
+
+                        if !should_update {
+                            debug!("User declined update to version {}", latest_version);
+                            return;
+                        }
+
+                        info!("Downloading and installing update to version {}", latest_version);
+
+                        match update.download_and_install().await {
+                            Ok(_) => {
+                                debug!("Update to version {} downloaded and installed successfully", latest_version);
+                            }
+                            Err(e) => {
+                                error!("Error installing update: {}", e);
+                                return;
+                            }
+                        }
+
+                        info!("Update installed, restarting application...");
+
+                        tauri::api::dialog::blocking::message(main_window_ref, "Update Successful", format!("Update to version {} was successful! You can now close this window.", latest_version));
+                    }
+                    Err(e) => {
+                        error!("Error during update flow: {}", e);
+                    }
+                }
+            });
+
             let app_handle = app.app_handle().clone();
 
             window.on_menu_event(move |e| {
