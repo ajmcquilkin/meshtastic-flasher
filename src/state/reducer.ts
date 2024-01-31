@@ -1,6 +1,6 @@
 import { useReducer } from "react";
-import { BoardOptionData } from "../types/types";
-import {
+import type { BoardOptionData } from "../types/types";
+import type {
   AddBoardAction,
   DeleteBoardAction,
   DuplicateBoardAction,

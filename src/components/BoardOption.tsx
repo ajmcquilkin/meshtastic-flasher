@@ -12,12 +12,12 @@ import {
 } from "@radix-ui/react-icons";
 import { Copy, Trash2, Check, X, Loader, GripVertical } from "lucide-react";
 
-import {
+import type {
   BoardArchitectureDictionary,
   BoardOptionData,
   FirmwareReleaseDictionary,
 } from "../types/types";
-import { Board, FirmwareRelease, SerialPortInfo } from "../types/backend";
+import type { Board, FirmwareRelease, SerialPortInfo } from "../types/backend";
 import DefaultTooltip from "./generic/DefaultTooltip";
 import HoverInfoCardSwitcher from "./hoverInfoCards/HoverInfoCardSwitcher";
 // import ProgressBar from "./ProgressBar";
@@ -54,7 +54,8 @@ const BoardOption = ({
 
   duplicateSelf,
   deleteSelf,
-}: BoardOptionProps) => {
+}: // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Will refactor later
+BoardOptionProps) => {
   const [_, setProgress] = useState<number>(0);
 
   // Workaround to allow for async cleanup functions
@@ -85,7 +86,7 @@ const BoardOption = ({
         cleanupFn();
       }
     };
-  }, []);
+  }, [boardOptionData.selectedPort]);
 
   const handlePortClick = async () => {
     const result = await open({
@@ -111,7 +112,7 @@ const BoardOption = ({
 
         <Select.Root
           value={boardOptionData.selectedHwModel?.toString() ?? undefined}
-          onValueChange={(board) => setHwModel(parseInt(board))}
+          onValueChange={(board) => setHwModel(Number.parseInt(board))}
         >
           <Select.Trigger
             className="flex flex-row gap-2 text-gray-500"

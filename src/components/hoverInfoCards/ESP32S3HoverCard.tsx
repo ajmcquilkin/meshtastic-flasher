@@ -18,7 +18,7 @@ const ESP32S3HoverCard = () => {
         <HoverCard.Content className="p-4 default-overlay" sideOffset={5}>
           <div className="w-96">
             <div className="relative w-96 h-96">
-              <img src={TDeckImage} alt="T-Deck Image" />
+              <img src={TDeckImage} alt="T-Deck" />
               <DefaultTooltip
                 text="User Button (USR or BOOT)"
                 delayDuration={0}

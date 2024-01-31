@@ -12,7 +12,7 @@ import { ArrowUpFromLine, Loader, Plus } from "lucide-react";
 import groupBy from "lodash.groupby";
 import orderBy from "lodash.orderby";
 
-import {
+import type {
   Board,
   ListBoardsResponse,
   ListFirmwareResponse,
@@ -31,7 +31,7 @@ import {
   createSetBoardVersionAction,
 } from "./state/actions";
 import WelcomeScreen from "./components/WelcomeScreenDialog";
-import {
+import type {
   BoardArchitectureDictionary,
   BoardOptionData,
   FirmwareReleaseDictionary,
@@ -167,9 +167,9 @@ const App = () => {
       unlistenOpenLogFile.then((fn) => fn()).catch(console.error);
       unlistenReportBug.then((fn) => fn()).catch(console.error);
     };
-  }, [currentWindow, setFullscreen]);
+  }, []);
 
-  const handleRefreshSerialPorts = async () => {
+  const handleRefreshSerialPorts = () => {
     getAvailableSerialPorts();
   };
 
@@ -249,7 +249,7 @@ const App = () => {
     };
 
     handleCreateStore();
-  }, [currentWindow]);
+  }, [handleUpdateShowWelcomeScreen, persistentStore]);
 
   const getBoards = async () => {
     const receivedBoards = (await invoke(
@@ -291,7 +291,7 @@ const App = () => {
     getBoards();
     getFirmwareReleases();
     getAvailableSerialPorts();
-  }, []);
+  }, [getBoards, getFirmwareReleases, getAvailableSerialPorts]);
 
   const flashDevice = async (port: string, board: BoardOptionData) => {
     try {
@@ -336,6 +336,7 @@ const App = () => {
           <DefaultTooltip text="Flash devices">
             <button
               className="w-12 h-12 border border-gray-100 bg-gray-700 rounded-full shadow-lg"
+              type="button"
               onClick={handleFlashDevices}
             >
               <ArrowUpFromLine
@@ -353,6 +354,7 @@ const App = () => {
               <div className="flex flex-col gap-4 p-4">
                 {state.boards.map((boardOption, index) => (
                   <BoardOption
+                    // biome-ignore lint/suspicious/noArrayIndexKey: No UUID to identify board option other than index
                     key={index}
                     boardOptionData={boardOption}
                     selectedBoard={findBoardByHwModel(
@@ -388,6 +390,7 @@ const App = () => {
 
               <button
                 className="flex flex-row justify-center gap-2 px-4 w-full"
+                type="button"
                 onClick={() => {
                   dispatch(
                     createAddBoardAction({

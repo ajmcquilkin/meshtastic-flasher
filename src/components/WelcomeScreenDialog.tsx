@@ -49,6 +49,7 @@ const WelcomeScreenDialog = () => {
             <Dialog.Close asChild>
               <button
                 className="mr-auto px-4 py-2 bg-gray-700 text-gray-50 rounded-lg border border-gray-100 hover:shadow-md transition-shadow"
+                type="button"
                 aria-label={"Close dialog"}
               >
                 Get started
@@ -60,6 +61,7 @@ const WelcomeScreenDialog = () => {
         <Dialog.Close asChild>
           <button
             className="fixed top-7 right-9 w-6 h-6 text-gray-500 hover:text-gray-600 transition-colors"
+            type="button"
             aria-label={"Close dialog"}
           >
             <X strokeWidth={1.5} />

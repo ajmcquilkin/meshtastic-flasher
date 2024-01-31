@@ -12,8 +12,11 @@ const Titlebar = ({ showWelcomeScreen, refreshSerialPorts }: TitlebarProps) => {
   return (
     <WindowTitlebar className="" data-tauri-drag-region>
       <div className="flex flex-row gap-3 mx-3">
-        <button onClick={() => openLink("https://meshtastic.org/")}>
-          <img src={MeshLogoDark} className="my-auto h-3" />
+        <button
+          type="button"
+          onClick={() => openLink("https://meshtastic.org/")}
+        >
+          <img src={MeshLogoDark} className="my-auto h-3" alt="Meshtastic" />
         </button>
 
         <div className="flex flex-row align-middle my-auto gap-3">

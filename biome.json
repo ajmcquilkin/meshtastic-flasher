@@ -26,6 +26,9 @@
       },
       "style": {
         "noImplicitBoolean": "off"
+      },
+      "nursery": {
+        "useImportRestrictions": "off"
       }
     }
   }

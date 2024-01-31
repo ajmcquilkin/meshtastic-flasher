@@ -1,4 +1,4 @@
-import { Board, FirmwareRelease } from "./backend";
+import type { Board, FirmwareRelease } from "./backend";
 
 export interface BoardOptionData {
   selectedHwModel: Board["hwModel"] | null;

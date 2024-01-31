@@ -43,7 +43,7 @@ const WindowMenu = ({
     getIsFullscreen();
   }, [currentWindow]);
 
-  const handleRefreshSerialPorts = async () => {
+  const handleRefreshSerialPorts = () => {
     refreshSerialPorts();
   };
 
