@@ -100,7 +100,7 @@ BoardOptionProps) => {
   const areValidBoardVariants = !!Object.values(availableBoards).flat().length;
   const areValidSerialPorts = !!availableSerialPorts.length;
   const areValidFirmwareVersions = !!Object.values(
-    availableFirmwareVersions
+    availableFirmwareVersions,
   ).flat().length;
 
   return (

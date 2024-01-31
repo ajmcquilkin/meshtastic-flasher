@@ -278,7 +278,7 @@ const WindowMenu = ({
               className="flex flex-row gap-3 cursor-pointer"
               onSelect={() =>
                 handleOpenLink(
-                  "https://github.com/ajmcquilkin/meshtastic-flasher/issues"
+                  "https://github.com/ajmcquilkin/meshtastic-flasher/issues",
                 )
               }
             >

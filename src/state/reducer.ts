@@ -27,7 +27,7 @@ export type Action =
 
 export const reducer = (
   state: BoardOptionsState,
-  action: Action
+  action: Action,
 ): BoardOptionsState => {
   switch (action.type) {
     case "set_board_hw_model": {

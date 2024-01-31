@@ -20,5 +20,5 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <PersistentStoreContext.Provider value={store}>
       <App />
     </PersistentStoreContext.Provider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

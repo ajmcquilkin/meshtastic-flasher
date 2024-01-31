@@ -40,7 +40,7 @@ import { usePersistentStore } from "./persistence";
 import { openLink } from "./helpers";
 
 const getFirstBoard = (
-  availableBoards: BoardArchitectureDictionary
+  availableBoards: BoardArchitectureDictionary,
 ): Board | null => {
   const firstArchitecture = Object.keys(availableBoards)?.[0];
   return availableBoards?.[firstArchitecture]?.[0] ?? null;
@@ -48,7 +48,7 @@ const getFirstBoard = (
 
 const findBoardByHwModel = (
   availableBoards: BoardArchitectureDictionary,
-  hwModel: number | null
+  hwModel: number | null,
 ): Board | null => {
   if (!hwModel) {
     return null;
@@ -96,7 +96,7 @@ const App = () => {
       (e) => {
         trace(`Received refresh_serial_ports event: ${e}`);
         handleRefreshSerialPorts();
-      }
+      },
     );
 
     const unlistenShowWelcomeScreen = listen<string>(
@@ -104,7 +104,7 @@ const App = () => {
       (e) => {
         trace(`Received show_welcome_screen event: ${e}`);
         handleShowWelcomeScreen();
-      }
+      },
     );
 
     const unlistenToggleFullscreen = listen<string>(
@@ -112,7 +112,7 @@ const App = () => {
       (e) => {
         trace(`Received toggle_fullscreen event: ${e}`);
         handleToggleFullscreen();
-      }
+      },
     );
 
     const unlistenRakWirelessDiscount = listen<string>(
@@ -120,7 +120,7 @@ const App = () => {
       (e) => {
         trace(`Received rak_wireless_discount event: ${e}`);
         handleOpenLink("https://rakwireless.kckb.st/ab922280");
-      }
+      },
     );
 
     const unlistenSupportMyWork = listen<string>("support_my_work", (e) => {
@@ -133,7 +133,7 @@ const App = () => {
       (e) => {
         trace(`Received copy_version_number event: ${e}`);
         handleCopyVersionNumber();
-      }
+      },
     );
 
     const unlistenCopyLogDirectory = listen<string>(
@@ -141,7 +141,7 @@ const App = () => {
       (e) => {
         trace(`Received copy_log_directory event: ${e}`);
         handleCopyLogDir();
-      }
+      },
     );
 
     const unlistenOpenLogFile = listen<string>("open_log_file", (e) => {
@@ -152,7 +152,7 @@ const App = () => {
     const unlistenReportBug = listen<string>("report_bug", (e) => {
       trace(`Received report_bug event: ${e}`);
       handleOpenLink(
-        "https://github.com/ajmcquilkin/meshtastic-flasher/issues"
+        "https://github.com/ajmcquilkin/meshtastic-flasher/issues",
       );
     });
 
@@ -226,7 +226,7 @@ const App = () => {
   };
 
   const handleUpdateShowWelcomeScreen = async (
-    shouldShowWelcomeScreen: boolean
+    shouldShowWelcomeScreen: boolean,
   ) => {
     await persistentStore.set("hasSeenWelcomeScreen", !shouldShowWelcomeScreen);
     info(`Setting 'hasSeenWelcomeScreen' to ${!shouldShowWelcomeScreen}`);
@@ -236,7 +236,7 @@ const App = () => {
   useEffect(() => {
     const handleCreateStore = async () => {
       const hasSeenWelcomeScreen = await persistentStore.get(
-        "hasSeenWelcomeScreen"
+        "hasSeenWelcomeScreen",
       );
 
       if (!hasSeenWelcomeScreen) {
@@ -253,7 +253,7 @@ const App = () => {
 
   const getBoards = async () => {
     const receivedBoards = (await invoke(
-      "fetch_supported_boards"
+      "fetch_supported_boards",
     )) as ListBoardsResponse;
     info(`Received ${receivedBoards.length} boards from backend`);
 
@@ -261,9 +261,9 @@ const App = () => {
       orderBy(
         receivedBoards,
         [(board) => board.activelySupported, (board) => board.displayName],
-        ["desc", "asc"]
+        ["desc", "asc"],
       ),
-      (board) => board.architecture
+      (board) => board.architecture,
     );
 
     setAvailableBoards(groupedBoards);
@@ -271,17 +271,17 @@ const App = () => {
 
   const getFirmwareReleases = async () => {
     const releasesResponse = (await invoke(
-      "fetch_firmware_releases"
+      "fetch_firmware_releases",
     )) as ListFirmwareResponse;
     info(
-      `Received ${releasesResponse.releases.alpha?.length} alpha and ${releasesResponse.releases.stable?.length} stable firmware releases from backend`
+      `Received ${releasesResponse.releases.alpha?.length} alpha and ${releasesResponse.releases.stable?.length} stable firmware releases from backend`,
     );
     setAvailableFirmwareVersions(releasesResponse.releases);
   };
 
   const getAvailableSerialPorts = async () => {
     const ports = (await invoke(
-      "get_available_serial_ports"
+      "get_available_serial_ports",
     )) as SerialPortInfo[];
     info(`Received ${ports.length} serial ports from backend`);
     setAvailableSerialPorts(ports);
@@ -314,7 +314,7 @@ const App = () => {
     info('Clicked "Flash devices"');
 
     Promise.all(
-      state.boards.map((b) => b.selectedPort && flashDevice(b.selectedPort, b))
+      state.boards.map((b) => b.selectedPort && flashDevice(b.selectedPort, b)),
     )
       .then(() => info("Flashing completed"))
       .catch((e) => error("Flashing failed", e));
@@ -359,7 +359,7 @@ const App = () => {
                     boardOptionData={boardOption}
                     selectedBoard={findBoardByHwModel(
                       availableBoards,
-                      boardOption.selectedHwModel
+                      boardOption.selectedHwModel,
                     )}
                     requestState={
                       boardOption?.selectedPort
@@ -399,7 +399,7 @@ const App = () => {
                       selectedPort: null,
                       selectedFirmwareVersion:
                         availableFirmwareVersions.stable?.[0].id ?? null,
-                    })
+                    }),
                   );
                 }}
               >

@@ -10,7 +10,7 @@ export type SetBoardHwModelAction = {
 
 export const createSetBoardHwModelAction = (
   index: number,
-  hwModel: number
+  hwModel: number,
 ): SetBoardHwModelAction => ({
   type: "set_board_hw_model",
   payload: {
@@ -29,7 +29,7 @@ export type SetBoardPortAction = {
 
 export const createSetBoardPortAction = (
   index: number,
-  port: string
+  port: string,
 ): SetBoardPortAction => ({
   type: "set_board_port",
   payload: {
@@ -48,7 +48,7 @@ export type SetBoardVersionAction = {
 
 export const createSetBoardVersionAction = (
   index: number,
-  version: string
+  version: string,
 ): SetBoardVersionAction => ({
   type: "set_board_version",
   payload: {
@@ -63,7 +63,7 @@ export type AddBoardAction = {
 };
 
 export const createAddBoardAction = (
-  board: BoardOptionData
+  board: BoardOptionData,
 ): AddBoardAction => ({
   type: "add_board",
   payload: board,
@@ -77,7 +77,7 @@ export type DuplicateBoardAction = {
 };
 
 export const createDuplicateBoardAction = (
-  index: number
+  index: number,
 ): DuplicateBoardAction => ({
   type: "duplicate_board",
   payload: {
