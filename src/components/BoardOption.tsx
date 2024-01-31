@@ -86,7 +86,7 @@ BoardOptionProps) => {
         cleanupFn();
       }
     };
-  }, [boardOptionData.selectedPort]);
+  }, []);
 
   const handlePortClick = async () => {
     const result = await open({

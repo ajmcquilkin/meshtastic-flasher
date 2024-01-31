@@ -167,7 +167,7 @@ const App = () => {
       unlistenOpenLogFile.then((fn) => fn()).catch(console.error);
       unlistenReportBug.then((fn) => fn()).catch(console.error);
     };
-  }, []);
+  }, [currentWindow, setFullscreen]);
 
   const handleRefreshSerialPorts = () => {
     getAvailableSerialPorts();
@@ -249,7 +249,7 @@ const App = () => {
     };
 
     handleCreateStore();
-  }, [handleUpdateShowWelcomeScreen, persistentStore]);
+  }, [currentWindow]);
 
   const getBoards = async () => {
     const receivedBoards = (await invoke(
@@ -291,7 +291,7 @@ const App = () => {
     getBoards();
     getFirmwareReleases();
     getAvailableSerialPorts();
-  }, [getBoards, getFirmwareReleases, getAvailableSerialPorts]);
+  }, []);
 
   const flashDevice = async (port: string, board: BoardOptionData) => {
     try {

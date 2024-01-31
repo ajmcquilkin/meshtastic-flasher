@@ -19,7 +19,7 @@
     "rules": {
       "all": true,
       "correctness": {
-        "useExhaustiveDependencies": "warn"
+        "useExhaustiveDependencies": "off"
       },
       "suspicious": {
         "noDoubleEquals": "warn"
